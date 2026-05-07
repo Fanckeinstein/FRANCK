@@ -110,6 +110,55 @@
         .table-hover tbody tr:hover {
             background-color: rgba(44, 90, 160, 0.05);
         }
+
+        .table-responsive {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .btn {
+            border-radius: 0.75rem;
+        }
+
+        .card {
+            border-radius: 1rem;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 0;
+        }
+
+        @media (max-width: 767.98px) {
+            .navbar-brand {
+                font-size: 1.15rem;
+            }
+
+            .sidebar {
+                min-height: auto;
+                border-right: 0;
+                border-bottom: 1px solid #dee2e6;
+            }
+
+            .sidebar-nav a {
+                padding: 10px 14px;
+            }
+
+            main {
+                padding: 14px !important;
+            }
+
+            .stat-number {
+                font-size: 1.8rem;
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
+
+            .btn-lg {
+                width: 100%;
+            }
+        }
         
         .alert {
             border: none;
@@ -203,6 +252,7 @@
                     <ul class="sidebar-nav mt-3">
                         {% if current_user.role == 'member' %}
                             <li><a href="/member/dashboard" class="{% if request.path == '/member/dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Tableau de bord</a></li>
+                            <li><a href="/member/request-contribution" class="{% if request.path == '/member/request-contribution' %}active{% endif %}"><i class="fas fa-hand-holding-heart"></i> Faire une cotisation</a></li>
                             <li><a href="/member/contributions" class="{% if request.path.startswith('/member/contributions') %}active{% endif %}"><i class="fas fa-money-bill"></i> Mes cotisations</a></li>
                             <li><a href="/member/loans" class="{% if request.path.startswith('/member/loans') %}active{% endif %}"><i class="fas fa-hand-holding-usd"></i> Mes prêts</a></li>
                             <li><a href="/member/request-loan" class="{% if request.path == '/member/request-loan' %}active{% endif %}"><i class="fas fa-plus-circle"></i> Demander un prêt</a></li>
@@ -211,6 +261,8 @@
                             <li><a href="/president/loans" class="{% if request.path.startswith('/president/loans') %}active{% endif %}"><i class="fas fa-file-contract"></i> Demandes de prêt</a></li>
                             <li><a href="/president/members" class="{% if request.path == '/president/members' %}active{% endif %}"><i class="fas fa-users"></i> Membres</a></li>
                             <li><a href="/president/reports" class="{% if request.path == '/president/reports' %}active{% endif %}"><i class="fas fa-chart-bar"></i> Rapports</a></li>
+                            <li><a href="/president/audit-logs" class="{% if request.path.startswith('/president/audit-logs') %}active{% endif %}"><i class="fas fa-history"></i> Historique d'audit</a></li>
+                            <li><a href="/president/admin/clear-data" class="{% if request.path.startswith('/president/admin/clear-data') %}active{% endif %}"><i class="fas fa-broom"></i> Nettoyer la base</a></li>
                         {% elif current_user.role == 'tresorier' %}
                             <li><a href="/tresorier/dashboard" class="{% if request.path == '/tresorier/dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Tableau de bord</a></li>
                             <li><a href="/tresorier/contributions" class="{% if request.path.startswith('/tresorier/contributions') %}active{% endif %}"><i class="fas fa-money-bill-wave"></i> Cotisations</a></li>

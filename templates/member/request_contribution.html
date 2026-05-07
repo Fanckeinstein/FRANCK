@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Faire une cotisation - Unissons la Main{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-hand-holding-heart"></i> Faire une cotisation</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Votre cotisation sera placée en attente puis validée par la trésorière après notification par email.
+                </div>
+
+                <form method="POST" action="/member/request-contribution">
+                    <div class="mb-3">
+                        <label for="month" class="form-label">Mois</label>
+                        <input type="month" class="form-control form-control-lg" id="month" name="month" value="{{ current_month }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Montant (FCFA)</label>
+                        <input type="number" class="form-control form-control-lg" id="amount" name="amount" min="1000" step="100" value="1000" required>
+                        <small class="text-muted">Montant recommandé: 1000 FCFA</small>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane"></i> Envoyer à la trésorière
+                        </button>
+                        <a href="/member/dashboard" class="btn btn-outline-secondary">Retour au tableau de bord</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

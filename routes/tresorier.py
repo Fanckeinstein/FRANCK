@@ -184,7 +184,10 @@ def record_repayment(loan_id):
         return jsonify({'error': 'Unauthorized'}), 403
     
     data = request.get_json()
-    amount = data.get('amount', type=float)
+    amount_raw = data.get('amount')
+    amount = float(amount_raw) if amount_raw not in (None, '') else None
+    if amount is None:
+        return jsonify({'error': 'Amount is required'}), 400
     
     loan = db.session.query(Loan).filter_by(id=loan_id).first()
     if not loan:
