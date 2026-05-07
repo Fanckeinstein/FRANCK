@@ -156,3 +156,64 @@ def reports():
     ).group_by(func.strftime('%Y-%m', Contribution.paid_at)).all()
     
     return render_template('president/reports.html', monthly_contributions=monthly_contributions)
+    
+@president_bp.route('/audit-logs')
+def audit_logs():
+    """View all audit logs (immutable history)"""
+    from models import AuditLog
+    
+    page = request.args.get('page', 1, type=int)
+    logs = db.session.query(AuditLog).order_by(AuditLog.created_at.desc()).paginate(page=page, per_page=20)
+    
+    return render_template('president/audit_logs.html', logs=logs)
+    
+@president_bp.route('/admin/clear-data', methods=['GET', 'POST'])
+def clear_data_page():
+    """Clear transactional data (president only) - keep audit logs and users"""
+    from models import AuditLog, Contribution, Loan, Transaction, MonthlySummary
+    
+    if request.method == 'POST':
+        confirmation = request.form.get('confirmation', '')
+        
+        if confirmation.upper() != 'OUI':
+            flash('Opération annulée - confirmation incorrecte', 'error')
+            return redirect(url_for('president.clear_data_page'))
+        
+        try:
+            # Count records before deletion
+            contrib_count = db.session.query(Contribution).count()
+            loans_count = db.session.query(Loan).count()
+            trans_count = db.session.query(Transaction).count()
+            summary_count = db.session.query(MonthlySummary).count()
+            total_records = contrib_count + loans_count + trans_count + summary_count
+            
+            # Store data for audit log
+            client_ip = request.remote_addr
+            
+            # Delete all transactional data
+            db.session.query(Contribution).delete()
+            db.session.query(Loan).delete()
+            db.session.query(Transaction).delete()
+            db.session.query(MonthlySummary).delete()
+            
+            # Create audit log entry
+            audit = AuditLog(
+                action='database_cleared',
+                performed_by=current_user.id,
+                description=f'Nettoyage complet des données par {current_user.full_name}',
+                affected_records=total_records,
+                details=f'Contributions: {contrib_count}, Loans: {loans_count}, Transactions: {trans_count}, Summaries: {summary_count}',
+                ip_address=client_ip
+            )
+            db.session.add(audit)
+            db.session.commit()
+            
+            flash(f'✓ Base de données nettoyée! {total_records} enregistrements supprimés. L\'historique d\'audit a été conservé.', 'success')
+            return redirect(url_for('president.dashboard'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'✗ Erreur lors du nettoyage: {str(e)}', 'error')
+            return redirect(url_for('president.clear_data_page'))
+    
+    return render_template('president/clear_data.html')

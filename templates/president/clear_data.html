@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Nettoyer les Données - Unissons la Main{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">⚠️ Nettoyage de la Base de Données</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5>Attention!</h5>
+                        <p>Cette opération est <strong>irréversible</strong> et va supprimer toutes les données transactionnelles.</p>
+                    </div>
+                    
+                    <h5 class="mb-3">Cette action va supprimer:</h5>
+                    <ul>
+                        <li>✓ Toutes les contributions</li>
+                        <li>✓ Toutes les demandes de prêts</li>
+                        <li>✓ Tous les enregistrements de transactions</li>
+                        <li>✓ Tous les résumés mensuels</li>
+                    </ul>
+                    
+                    <h5 class="mb-3 mt-4">Ce qui sera <strong>CONSERVÉ</strong>:</h5>
+                    <ul>
+                        <li>✓ Tous les comptes utilisateurs</li>
+                        <li>✓ <strong>L'intégralité de l'historique d'audit</strong> (immuable)</li>
+                        <li>✓ Les logs de cette action de suppression</li>
+                    </ul>
+                    
+                    <hr/>
+                    
+                    <h5>Cas d'utilisation:</h5>
+                    <p>Cette opération est utile quand vous avez:</p>
+                    <ul>
+                        <li>Testé le système en profondeur</li>
+                        <li>Fini vos tests et prêt à démarrer avec des données réelles</li>
+                        <li>Besoin de réinitialiser pour un nouveau cycle</li>
+                    </ul>
+                    
+                    {% if session.get('success') %}
+                    <div class="alert alert-success">{{ session.pop('success') }}</div>
+                    {% endif %}
+                    
+                    <form method="POST" class="mt-4">
+                        <div class="mb-3">
+                            <label for="confirmation" class="form-label">
+                                Pour confirmer, tapez <strong>"OUI"</strong> (en majuscules):
+                            </label>
+                            <input 
+                                type="text" 
+                                class="form-control form-control-lg" 
+                                id="confirmation" 
+                                name="confirmation" 
+                                placeholder="Tapez OUI pour confirmer"
+                                autofocus
+                            >
+                            <small class="text-muted d-block mt-2">
+                                Vous devez taper exactement "OUI" pour confirmer cette action dangereuse.
+                            </small>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('president.dashboard') }}" class="btn btn-secondary btn-lg">
+                                ← Annuler
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                🗑️ Nettoyer la Base de Données
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="alert alert-info mt-4">
+                        <h6>ℹ️ Information Importante</h6>
+                        <p class="mb-0">
+                            Après cette opération, vous pourrez consulter les logs d'audit 
+                            <a href="{{ url_for('president.audit_logs') }}">ici</a> pour voir 
+                            l'historique complet de cette action et toutes les autres opérations administratives.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

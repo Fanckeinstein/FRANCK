@@ -111,6 +111,62 @@ def create_app():
         print("  - president1 / password123")
         print("  - tresorier1 / password123")
         print("  - secretaire1 / password123")
+    
+    @app.cli.command()
+    def clear_data():
+        """Clear all transactional data but keep audit logs and user accounts (admin only)"""
+        from models import AuditLog, User, Contribution, Loan, Transaction, MonthlySummary
+        
+        print("⚠️  Cette commande va vider les données transactionnelles (pas les utilisateurs ni l'audit log)")
+        print("Les tables suivantes seront vidées:")
+        print("  - contributions")
+        print("  - loans")
+        print("  - transactions")
+        print("  - monthly_summaries")
+        
+        confirm = input("\nÊtes-vous sûr? (tapez 'OUI' pour confirmer): ")
+        
+        if confirm.upper() != 'OUI':
+            print("✗ Opération annulée")
+            return
+        
+        try:
+            # Count records before deletion
+            contrib_count = db.session.query(Contribution).count()
+            loans_count = db.session.query(Loan).count()
+            trans_count = db.session.query(Transaction).count()
+            summary_count = db.session.query(MonthlySummary).count()
+            total_records = contrib_count + loans_count + trans_count + summary_count
+            
+            # Get president user for audit log
+            president = db.session.query(User).filter_by(role='president').first()
+            
+            # Delete all transactional data
+            db.session.query(Contribution).delete()
+            db.session.query(Loan).delete()
+            db.session.query(Transaction).delete()
+            db.session.query(MonthlySummary).delete()
+            
+            # Create audit log entry
+            audit = AuditLog(
+                action='database_cleared',
+                performed_by=president.id if president else 1,
+                description='Nettoyage complet des données transactionnelles',
+                affected_records=total_records,
+                details=f'Contributions: {contrib_count}, Loans: {loans_count}, Transactions: {trans_count}, Summaries: {summary_count}'
+            )
+            db.session.add(audit)
+            db.session.commit()
+            
+            print(f"\n✓ Base de données nettoyée avec succès!")
+            print(f"  - {total_records} enregistrements supprimés")
+            print(f"  - Utilisateurs: {db.session.query(User).count()} (inchangé)")
+            print(f"  - Audit logs: Mis à jour")
+            print("\n✓ Vous pouvez maintenant commencer avec des données réelles")
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"✗ Erreur lors du nettoyage: {str(e)}")
 
     return app
 

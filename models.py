@@ -116,3 +116,18 @@ class MonthlySummary(db.Model):
     members_pending = db.Column(db.Integer, default=0)
     generated_at = db.Column(db.DateTime, default=datetime.utcnow)
     published_at = db.Column(db.DateTime, nullable=True)
+    
+class AuditLog(db.Model):
+    """Audit log for all admin actions - never deleted"""
+    __tablename__ = 'audit_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    action = db.Column(db.String(100), nullable=False)  # 'database_cleared', 'user_created', 'user_deleted', etc
+    performed_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    description = db.Column(db.String(500), nullable=True)
+    affected_records = db.Column(db.Integer, nullable=True)  # Number of records affected
+    details = db.Column(db.String(1000), nullable=True)  # JSON details or extra info
+    ip_address = db.Column(db.String(50), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    
+    actor = db.relationship('User', foreign_keys=[performed_by])
