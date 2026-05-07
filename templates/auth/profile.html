@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Profil - Unissons la Main{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4><i class="fas fa-user-circle"></i> Mon Profil</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/auth/profile">
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">Nom complet</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" value="{{ user.full_name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email or '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Téléphone</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" value="{{ user.phone or '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rôle</label>
+                        <input type="text" class="form-control" value="{{ user.role|title }}" disabled>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h5>Changer le mot de passe</h5>
+                    
+                    <div class="mb-3">
+                        <label for="old_password" class="form-label">Mot de passe actuel</label>
+                        <input type="password" class="form-control" id="old_password" name="old_password">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">Nouveau mot de passe</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password">
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-sm-flex justify-content-center">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enregistrer les modifications
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord Trésorier - Unissons la Main{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="fas fa-money-bill-wave"></i> Tableau de bord Trésorier</h1>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-number">{{ "%.0f"|format(treasury_balance) }} FCFA</div>
+            <div class="stat-label">Solde caisse</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-number">{{ "%.0f"|format(total_contributions) }} FCFA</div>
+            <div class="stat-label">Total collecté</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-number">{{ "%.0f"|format(month_total) }} FCFA</div>
+            <div class="stat-label">Ce mois ({{ current_month }})</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-number">{{ pending_count }}</div>
+            <div class="stat-label">En attente</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Contributions Management -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-file-import"></i> Gestion des cotisations</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    <strong>Cotisations {{ current_month }}:</strong><br>
+                    {{ pending_count }} en attente · Montant mensuel: 1000 FCFA
+                </p>
+            </div>
+            <div class="card-footer">
+                <a href="/tresorier/contributions" class="btn btn-primary">
+                    <i class="fas fa-list"></i> Gérer cotisations
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Repayments -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-coins"></i> Remboursements de prêts</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    <strong>Total prêts actifs:</strong><br>
+                    {{ "%.0f"|format(total_loans) }} FCFA
+                </p>
+            </div>
+            <div class="card-footer">
+                <a href="/tresorier/repayments" class="btn btn-primary">
+                    <i class="fas fa-list"></i> Voir remboursements
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-history"></i> Dernières transactions</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Type</th>
+                    <th>Utilisateur</th>
+                    <th>Montant</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if recent_transactions %}
+                    {% for t in recent_transactions %}
+                        <tr>
+                            <td><span class="badge bg-info">{{ t.type }}</span></td>
+                            <td>{{ t.user.full_name }}</td>
+                            <td>{{ "%.0f"|format(t.amount) }} FCFA</td>
+                            <td>{{ t.description[:40] }}{% if t.description and t.description|length > 40 %}...{% endif %}</td>
+                            <td>{{ t.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Aucune transaction</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

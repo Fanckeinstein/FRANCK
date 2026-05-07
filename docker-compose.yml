@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  unissons-la-main:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - SECRET_KEY=docker-dev-key-change-in-prod
+      - DEBUG=False
+      - DATABASE_URL=sqlite:///unissons.db
+      - VERIF_DEV_MODE=0
+    volumes:
+      - ./unissons.db:/app/unissons.db
+    restart: unless-stopped
+
+# Usage:
+# docker-compose up -d
+# Access: http://localhost:5000

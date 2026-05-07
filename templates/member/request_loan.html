@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Demander un prêt - Unissons la Main{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-hand-holding-usd"></i> Demander un prêt d'urgence</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Votre demande sera examinée par le président. Vous serez notifié de la décision.
+                </div>
+                
+                <form method="POST" action="/member/request-loan">
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Montant (FCFA)</label>
+                        <input type="number" class="form-control form-control-lg" id="amount" name="amount" min="1000" step="100" required>
+                        <small class="text-muted">Montant minimum: 1000 FCFA</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Raison de l'urgence</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="5" required placeholder="Décrivez votre situation..."></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane"></i> Soumettre la demande
+                        </button>
+                        <a href="/member/loans" class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

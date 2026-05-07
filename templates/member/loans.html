@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Mes prêts - Unissons la Main{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-hand-holding-usd"></i> Historique de mes prêts</h1>
+    <a href="/member/request-loan" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Demander un prêt
+    </a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Montant</th>
+                    <th>Raison</th>
+                    <th>Statut</th>
+                    <th>Date de demande</th>
+                    <th>Échéance</th>
+                    <th>Remboursé</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if loans %}
+                    {% for loan in loans %}
+                        <tr>
+                            <td><strong>{{ "%.0f"|format(loan.amount) }} FCFA</strong></td>
+                            <td>{{ loan.reason[:50] }}{% if loan.reason|length > 50 %}...{% endif %}</td>
+                            <td>
+                                {% if loan.status == 'approved' %}
+                                    <span class="badge bg-success">Approuvé</span>
+                                {% elif loan.status == 'pending' %}
+                                    <span class="badge bg-warning">En attente</span>
+                                {% elif loan.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejeté</span>
+                                {% elif loan.status == 'repaid' %}
+                                    <span class="badge bg-info">Remboursé</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ loan.requested_at.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                {% if loan.repayment_deadline %}
+                                    {{ loan.repayment_deadline.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ "%.0f"|format(loan.amount_repaid) }} FCFA</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#loanModal{{ loop.index }}">
+                                    <i class="fas fa-eye"></i> Détails
+                                </button>
+                                
+                                <!-- Loan Detail Modal -->
+                                <div class="modal fade" id="loanModal{{ loop.index }}">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Détails du prêt</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p><strong>Montant:</strong> {{ "%.0f"|format(loan.amount) }} FCFA</p>
+                                                <p><strong>Raison:</strong> {{ loan.reason }}</p>
+                                                <p><strong>Statut:</strong> {{ loan.status }}</p>
+                                                {% if loan.approval_notes %}
+                                                    <p><strong>Notes:</strong> {{ loan.approval_notes }}</p>
+                                                {% endif %}
+                                                <p><strong>Montant remboursé:</strong> {{ "%.0f"|format(loan.amount_repaid) }} / {{ "%.0f"|format(loan.amount) }} FCFA</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox"></i> Aucun prêt demandé pour le moment
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

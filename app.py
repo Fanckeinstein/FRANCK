@@ -22,14 +22,20 @@ def create_app():
 
     # Register blueprints
     from verification import bp as verification_bp
+    from routes.auth import auth_bp
+    from routes.common import common_bp
+    from routes.member import member_bp
+    from routes.president import president_bp
+    from routes.tresorier import tresorier_bp
+    from routes.secretaire import secretaire_bp
+    
     app.register_blueprint(verification_bp, url_prefix='/verify')
-
-    @app.route('/')
-    def index():
-        from flask_login import current_user
-        if current_user.is_authenticated:
-            return f"Bienvenue {current_user.full_name}! (Rôle: {current_user.role})"
-        return "Welcome to Unissons la Main"
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(common_bp)
+    app.register_blueprint(member_bp)
+    app.register_blueprint(president_bp)
+    app.register_blueprint(tresorier_bp)
+    app.register_blueprint(secretaire_bp)
 
     return app
 

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord - Unissons la Main{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4"><i class="fas fa-home"></i> Tableau de bord</h1>
+    
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="stat-number">{{ "%.0f"|format(total_paid_year) }} FCFA</div>
+                <div class="stat-label">Cotisé cette année</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="stat-number">
+                    {% if contribution and contribution.status == 'paid' %}
+                        <span class="badge bg-success">Payée</span>
+                    {% else %}
+                        <span class="badge bg-warning">En attente</span>
+                    {% endif %}
+                </div>
+                <div class="stat-label">Cotisation {{ current_month }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="stat-number">{{ recent_loans|length }}</div>
+                <div class="stat-label">Prêts demandés</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="stat-number">{{ "%.0f"|format(treasury_balance) }} FCFA</div>
+                <div class="stat-label">Solde Caisse</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Contribution Section -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Cotisation {{ current_month }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if contribution %}
+                        <p class="mb-2"><strong>Montant:</strong> {{ "%.2f"|format(contribution.amount) }} FCFA</p>
+                        <p class="mb-2"><strong>Statut:</strong> 
+                            {% if contribution.status == 'paid' %}
+                                <span class="badge bg-success">Payée</span>
+                                <small class="text-muted">le {{ contribution.paid_at.strftime('%d/%m/%Y') }}</small>
+                            {% elif contribution.status == 'overdue' %}
+                                <span class="badge bg-danger">En retard</span>
+                            {% else %}
+                                <span class="badge bg-warning">En attente</span>
+                            {% endif %}
+                        </p>
+                        {% if contribution.payment_method %}
+                            <p class="mb-0"><strong>Moyen de paiement:</strong> {{ contribution.payment_method }}</p>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted">Aucune cotisation enregistrée pour ce mois.</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="/member/contributions" class="btn btn-sm btn-primary">
+                        <i class="fas fa-history"></i> Voir l'historique
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loans Section -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-hand-holding-usd"></i> Mes prêts</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_loans %}
+                        <div class="list-group">
+                            {% for loan in recent_loans %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">{{ "%.0f"|format(loan.amount) }} FCFA</h6>
+                                            <p class="mb-1 text-muted small">{{ loan.reason[:50] }}...</p>
+                                            <small>
+                                                {% if loan.status == 'approved' %}
+                                                    <span class="badge bg-success">Approuvé</span>
+                                                {% elif loan.status == 'pending' %}
+                                                    <span class="badge bg-warning">En attente</span>
+                                                {% elif loan.status == 'rejected' %}
+                                                    <span class="badge bg-danger">Rejeté</span>
+                                                {% elif loan.status == 'repaid' %}
+                                                    <span class="badge bg-info">Remboursé</span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <small class="text-muted">{{ loan.requested_at.strftime('%d/%m/%Y') }}</small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Aucun prêt demandé pour le moment.</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="/member/request-loan" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Demander un prêt
+                    </a>
+                    <a href="/member/loans" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i> Tous les prêts
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Contributions -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-list"></i> Historique de mes cotisations</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mois</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th>Date de paiement</th>
+                        <th>Moyen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if recent_contributions %}
+                        {% for contrib in recent_contributions %}
+                            <tr>
+                                <td>{{ contrib.month }}</td>
+                                <td>{{ "%.2f"|format(contrib.amount) }} FCFA</td>
+                                <td>
+                                    {% if contrib.status == 'paid' %}
+                                        <span class="badge bg-success">Payée</span>
+                                    {% elif contrib.status == 'overdue' %}
+                                        <span class="badge bg-danger">En retard</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">En attente</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ contrib.paid_at.strftime('%d/%m/%Y') if contrib.paid_at else '-' }}</td>
+                                <td>{{ contrib.payment_method or '-' }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Aucune cotisation</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

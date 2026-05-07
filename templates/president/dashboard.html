@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord Président - Unissons la Main{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="fas fa-crown"></i> Tableau de bord Président</h1>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-number">{{ total_members }}</div>
+            <div class="stat-label">Membres actifs</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-number">{{ "%.0f"|format(total_contributions) }} FCFA</div>
+            <div class="stat-label">Total collecté</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-number">{{ total_loans_pending }}</div>
+            <div class="stat-label">Prêts en attente</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-number">{{ "%.0f"|format(treasury_balance) }} FCFA</div>
+            <div class="stat-label">Solde caisse</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Pending Loans -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-file-contract"></i> Demandes de prêt en attente</h5>
+            </div>
+            <div class="card-body">
+                {% if pending_loans %}
+                    <div class="list-group">
+                        {% for loan in pending_loans[:5] %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ loan.user.full_name }}</h6>
+                                        <p class="mb-1 text-muted small">{{ "%.0f"|format(loan.amount) }} FCFA - {{ loan.reason[:50] }}...</p>
+                                        <small>{{ loan.requested_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                    </div>
+                                    <a href="/president/loans" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i> Voir
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucune demande en attente.</p>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="/president/loans" class="btn btn-sm btn-primary">
+                    <i class="fas fa-list"></i> Toutes les demandes ({{ total_loans_pending }})
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Monthly Status -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Cotisations {{ current_month }}</h5>
+            </div>
+            <div class="card-body">
+                {% if contrib_status %}
+                    <div class="mb-3">
+                        {% for status, count in contrib_status.items() %}
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>{{ status|title }}</span>
+                                    <strong>{{ count }}</strong>
+                                </div>
+                                <div class="progress" style="height: 5px;">
+                                    {% set color = 'success' if status == 'paid' else 'warning' if status == 'pending' else 'danger' %}
+                                    <div class="progress-bar bg-{{ color }}" style="width: {{ (count / (total_members or 1) * 100)|int }}%"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Pas de données disponibles.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-bolt"></i> Actions rapides</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <a href="/president/loans?status=pending" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-clipboard"></i> Examiner prêts
+                </a>
+            </div>
+            <div class="col-md-3 mb-3">
+                <a href="/president/members" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-users"></i> Voir membres
+                </a>
+            </div>
+            <div class="col-md-3 mb-3">
+                <a href="/president/reports" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-file-alt"></i> Rapports
+                </a>
+            </div>
+            <div class="col-md-3 mb-3">
+                <a href="/auth/profile" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-cog"></i> Paramètres
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

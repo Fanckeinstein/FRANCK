@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord Secrétaire - Unissons la Main{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="fas fa-clipboard"></i> Tableau de bord Secrétaire</h1>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-number">{{ "%.0f"|format(total_contributions) }} FCFA</div>
+            <div class="stat-label">Total collecté</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-number">{{ contributions_paid }}</div>
+            <div class="stat-label">Payées ({{ current_month }})</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-number">{{ contributions_pending }}</div>
+            <div class="stat-label">En attente ({{ current_month }})</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="stat-number">{{ "%.0f"|format(treasury_balance) }} FCFA</div>
+            <div class="stat-label">Solde caisse</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Monthly Report -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-file-alt"></i> Rapports mensuels</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Générez et consultez les rapports mensuels des finances.</p>
+            </div>
+            <div class="card-footer">
+                <a href="/secretaire/monthly-report" class="btn btn-primary">
+                    <i class="fas fa-file-alt"></i> Voir rapports
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- History -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-history"></i> Historique complet</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Consultez tous les enregistrements de transactions.</p>
+            </div>
+            <div class="card-footer">
+                <a href="/secretaire/history" class="btn btn-primary">
+                    <i class="fas fa-eye"></i> Voir l'historique
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Summary -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Résumé {{ current_month }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Cotisations</h6>
+                <p class="mb-2"><strong>Montant collecté:</strong> {{ "%.0f"|format(total_contributions) }} FCFA</p>
+                <p class="mb-2"><strong>Payées:</strong> {{ contributions_paid }}</p>
+                <p class="mb-0"><strong>En attente:</strong> {{ contributions_pending }}</p>
+            </div>
+            <div class="col-md-6">
+                <h6>Prêts</h6>
+                <p class="mb-2"><strong>Approuvés:</strong> {{ "%.0f"|format(loans_approved) }} FCFA</p>
+                <p class="mb-2"><strong>En attente:</strong> {{ loans_count }}</p>
+                <p class="mb-0"><strong>Solde caisse:</strong> {{ "%.0f"|format(treasury_balance) }} FCFA</p>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a href="/secretaire/monthly-report" class="btn btn-sm btn-primary">
+            <i class="fas fa-download"></i> Exporter rapport
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Demandes de prêt - Unissons la Main{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-file-contract"></i> Demandes de prêt</h1>
+    <div class="btn-group" role="group">
+        <a href="/president/loans?status=all" class="btn btn-sm {% if status == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            Tous
+        </a>
+        <a href="/president/loans?status=pending" class="btn btn-sm {% if status == 'pending' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            En attente
+        </a>
+        <a href="/president/loans?status=approved" class="btn btn-sm {% if status == 'approved' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            Approuvés
+        </a>
+        <a href="/president/loans?status=rejected" class="btn btn-sm {% if status == 'rejected' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            Rejetés
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Demandeur</th>
+                    <th>Montant</th>
+                    <th>Raison</th>
+                    <th>Statut</th>
+                    <th>Date demande</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if loans %}
+                    {% for loan in loans %}
+                        <tr>
+                            <td><strong>{{ loan.user.full_name }}</strong></td>
+                            <td>{{ "%.0f"|format(loan.amount) }} FCFA</td>
+                            <td>{{ loan.reason[:40] }}{% if loan.reason|length > 40 %}...{% endif %}</td>
+                            <td>
+                                {% if loan.status == 'pending' %}
+                                    <span class="badge bg-warning">En attente</span>
+                                {% elif loan.status == 'approved' %}
+                                    <span class="badge bg-success">Approuvé</span>
+                                {% elif loan.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejeté</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ loan.requested_at.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                {% if loan.status == 'pending' %}
+                                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#approveLoanModal{{ loop.index }}">
+                                        <i class="fas fa-check"></i> Approuver
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectLoanModal{{ loop.index }}">
+                                        <i class="fas fa-times"></i> Rejeter
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#loanModal{{ loop.index }}">
+                                        <i class="fas fa-eye"></i> Voir
+                                    </button>
+                                {% endif %}
+                                
+                                <!-- Approve Modal -->
+                                <div class="modal fade" id="approveLoanModal{{ loop.index }}">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Approuver la demande</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p><strong>Demandeur:</strong> {{ loan.user.full_name }}</p>
+                                                <p><strong>Montant:</strong> {{ "%.0f"|format(loan.amount) }} FCFA</p>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Durée de remboursement (jours)</label>
+                                                    <input type="number" class="form-control" value="30" id="repaymentDays{{ loop.index }}">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Notes</label>
+                                                    <textarea class="form-control" id="notes{{ loop.index }}"></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                <button type="button" class="btn btn-success" onclick="approveLoan({{ loan.id }}, {{ loop.index }})">
+                                                    <i class="fas fa-check"></i> Approuver
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Reject Modal -->
+                                <div class="modal fade" id="rejectLoanModal{{ loop.index }}">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Rejeter la demande</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p><strong>Demandeur:</strong> {{ loan.user.full_name }}</p>
+                                                <p><strong>Montant:</strong> {{ "%.0f"|format(loan.amount) }} FCFA</p>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Raison du rejet</label>
+                                                    <textarea class="form-control" id="rejectReason{{ loop.index }}"></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                <button type="button" class="btn btn-danger" onclick="rejectLoan({{ loan.id }}, {{ loop.index }})">
+                                                    <i class="fas fa-times"></i> Rejeter
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox"></i> Aucune demande
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function approveLoan(loanId, index) {
+    const repaymentDays = document.getElementById('repaymentDays' + index).value;
+    const notes = document.getElementById('notes' + index).value;
+    
+    fetch(`/president/api/loan/${loanId}/approve`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            repayment_days: parseInt(repaymentDays),
+            approval_notes: notes
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            location.reload();
+        }
+    });
+}
+
+function rejectLoan(loanId, index) {
+    const reason = document.getElementById('rejectReason' + index).value;
+    
+    fetch(`/president/api/loan/${loanId}/reject`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({reason: reason})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}

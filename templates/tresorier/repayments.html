@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Remboursements - Unissons la Main{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="fas fa-coins"></i> Remboursements de prêts</h1>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Membre</th>
+                    <th>Montant prêt</th>
+                    <th>Remboursé</th>
+                    <th>Restant</th>
+                    <th>Échéance</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if loans %}
+                    {% for loan in loans %}
+                        <tr>
+                            <td><strong>{{ loan.user.full_name }}</strong></td>
+                            <td>{{ "%.0f"|format(loan.amount) }} FCFA</td>
+                            <td>{{ "%.0f"|format(loan.amount_repaid) }} FCFA</td>
+                            <td>
+                                {% set remaining = loan.amount - loan.amount_repaid %}
+                                <strong>{{ "%.0f"|format(remaining) }} FCFA</strong>
+                            </td>
+                            <td>
+                                {% if loan.repayment_deadline %}
+                                    {{ loan.repayment_deadline.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if loan.status == 'approved' and loan.amount_repaid < loan.amount %}
+                                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#recordRepaymentModal{{ loop.index }}">
+                                        <i class="fas fa-money-bill"></i> Enregistrer
+                                    </button>
+                                    
+                                    <div class="modal fade" id="recordRepaymentModal{{ loop.index }}">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Enregistrer un remboursement</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p><strong>Membre:</strong> {{ loan.user.full_name }}</p>
+                                                    <p><strong>Montant restant:</strong> {{ "%.0f"|format(loan.amount - loan.amount_repaid) }} FCFA</p>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Montant remboursé</label>
+                                                        <input type="number" class="form-control" id="repaymentAmount{{ loop.index }}" min="1" max="{{ loan.amount - loan.amount_repaid }}">
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <button type="button" class="btn btn-primary" onclick="recordRepayment({{ loan.id }}, {{ loop.index }})">
+                                                        <i class="fas fa-save"></i> Enregistrer
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-success">Remboursé</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Aucun prêt actif</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function recordRepayment(loanId, index) {
+    const amount = document.getElementById('repaymentAmount' + index).value;
+    fetch(`/tresorier/api/loan/${loanId}/record-repayment`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({amount: parseFloat(amount)})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}

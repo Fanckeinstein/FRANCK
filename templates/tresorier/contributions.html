@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Cotisations - Unissons la Main{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-money-bill-wave"></i> Gérer les cotisations</h1>
+    <div class="btn-group" role="group">
+        <a href="/tresorier/contributions?status=all" class="btn btn-sm {% if status == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">Tous</a>
+        <a href="/tresorier/contributions?status=pending" class="btn btn-sm {% if status == 'pending' %}btn-primary{% else %}btn-outline-primary{% endif %}">En attente</a>
+        <a href="/tresorier/contributions?status=paid" class="btn btn-sm {% if status == 'paid' %}btn-primary{% else %}btn-outline-primary{% endif %}">Payées</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Membre</th>
+                    <th>Mois</th>
+                    <th>Montant</th>
+                    <th>Statut</th>
+                    <th>Moyen</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if contributions %}
+                    {% for contrib in contributions %}
+                        <tr>
+                            <td><strong>{{ contrib.user.full_name }}</strong></td>
+                            <td>{{ contrib.month }}</td>
+                            <td>{{ "%.0f"|format(contrib.amount) }} FCFA</td>
+                            <td>
+                                {% if contrib.status == 'paid' %}
+                                    <span class="badge bg-success">Payée</span>
+                                {% else %}
+                                    <span class="badge bg-warning">En attente</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ contrib.payment_method or '-' }}</td>
+                            <td>
+                                {% if contrib.status != 'paid' %}
+                                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#validateModal{{ loop.index }}">
+                                        <i class="fas fa-check"></i> Valider
+                                    </button>
+                                    
+                                    <div class="modal fade" id="validateModal{{ loop.index }}">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Valider la cotisation</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p><strong>Membre:</strong> {{ contrib.user.full_name }}</p>
+                                                    <p><strong>Montant:</strong> {{ "%.0f"|format(contrib.amount) }} FCFA</p>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Moyen de paiement</label>
+                                                        <select class="form-select" id="method{{ loop.index }}">
+                                                            <option value="cash">Espèces</option>
+                                                            <option value="mobile_money">Mobile Money</option>
+                                                            <option value="bank">Virement bancaire</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <button type="button" class="btn btn-success" onclick="validateContribution({{ contrib.id }}, {{ loop.index }})">
+                                                        <i class="fas fa-check"></i> Valider
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">Validée</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Aucune cotisation</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function validateContribution(contribId, index) {
+    const method = document.getElementById('method' + index).value;
+    fetch('/tresorier/api/contribution/validate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            contribution_id: contribId,
+            payment_method: method
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}

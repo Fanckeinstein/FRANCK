@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - Unissons la Main{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row align-items-center">
+        <div class="col-lg-6">
+            <h1 class="display-4 mb-4">
+                <i class="fas fa-handshake" style="color: #d4a574;"></i> Unissons la Main
+            </h1>
+            <p class="lead text-muted">
+                Une plateforme de solidarité financière pour les familles et les communautés.
+            </p>
+            <p class="text-justify">
+                Chaque membre cotise 1000 FCFA par mois. L'argent collecté sert à :
+            </p>
+            <ul class="list-group list-group-flush mb-4">
+                <li class="list-group-item">✓ Aider un membre en cas d'urgence</li>
+                <li class="list-group-item">✓ Accorder des prêts temporaires</li>
+                <li class="list-group-item">✓ Suivre les remboursements</li>
+                <li class="list-group-item">✓ Garantir une totale transparence financière</li>
+            </ul>
+            
+            {% if not current_user.is_authenticated %}
+                <div class="d-grid gap-2 d-sm-flex">
+                    <a href="/auth/login" class="btn btn-primary btn-lg px-4 me-md-2">
+                        <i class="fas fa-sign-in-alt"></i> Se connecter
+                    </a>
+                    <a href="/auth/register" class="btn btn-outline-primary btn-lg px-4">
+                        <i class="fas fa-user-plus"></i> S'inscrire
+                    </a>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Bienvenue {{ current_user.full_name }}!
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5">
+                    <h3 class="card-title mb-4">Types d'utilisateurs</h3>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-crown" style="color: gold;"></i> Président</h6>
+                        <p class="text-muted small">Valide les demandes de prêt, gère les statistiques</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-money-bill" style="color: #28a745;"></i> Trésorier</h6>
+                        <p class="text-muted small">Enregistre les cotisations et gère la caisse</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-clipboard" style="color: #007bff;"></i> Secrétaire</h6>
+                        <p class="text-muted small">Génère les rapports mensuels et archives</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-users" style="color: #6c757d;"></i> Membre</h6>
+                        <p class="text-muted small">Paye ses cotisations et demande des prêts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

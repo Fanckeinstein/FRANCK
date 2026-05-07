@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Unissons la Main{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c5aa0;
+            --secondary: #d4a574;
+            --danger: #dc3545;
+            --success: #28a745;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: white !important;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,.8) !important;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover {
+            color: white !important;
+            background-color: rgba(255,255,255,.1);
+            border-radius: 4px;
+        }
+        
+        .sidebar {
+            background-color: white;
+            border-right: 1px solid #dee2e6;
+            min-height: calc(100vh - 60px);
+        }
+        
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .sidebar-nav a {
+            color: #333;
+            padding: 12px 20px;
+            display: block;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background-color: #f8f9fa;
+            border-left-color: var(--primary);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,.08);
+            border-top: 3px solid var(--primary);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #1e3f59;
+            border-color: #1e3f59;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        
+        .badge {
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(44, 90, 160, 0.05);
+        }
+        
+        .alert {
+            border: none;
+            border-left: 4px solid;
+        }
+        
+        .alert-success {
+            border-left-color: var(--success);
+        }
+        
+        .alert-danger {
+            border-left-color: var(--danger);
+        }
+        
+        .alert-info {
+            border-left-color: var(--primary);
+        }
+        
+        footer {
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            margin-top: 40px;
+            padding: 20px 0;
+            color: #666;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-handshake"></i> Unissons la Main
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle"></i> {{ current_user.full_name }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                                <li><a class="dropdown-item" href="/auth/profile"><i class="fas fa-user"></i> Profil</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="/auth/logout" style="display:inline;">
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="fas fa-sign-out-alt"></i> Déconnexion
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/login">Connexion</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/register">Inscription</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container-fluid mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <div class="row">
+            {% if current_user.is_authenticated %}
+                <!-- Sidebar for authenticated users -->
+                <nav class="col-md-2 sidebar">
+                    <ul class="sidebar-nav mt-3">
+                        {% if current_user.role == 'member' %}
+                            <li><a href="/member/dashboard" class="{% if request.path == '/member/dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Tableau de bord</a></li>
+                            <li><a href="/member/contributions" class="{% if request.path.startswith('/member/contributions') %}active{% endif %}"><i class="fas fa-money-bill"></i> Mes cotisations</a></li>
+                            <li><a href="/member/loans" class="{% if request.path.startswith('/member/loans') %}active{% endif %}"><i class="fas fa-hand-holding-usd"></i> Mes prêts</a></li>
+                            <li><a href="/member/request-loan" class="{% if request.path == '/member/request-loan' %}active{% endif %}"><i class="fas fa-plus-circle"></i> Demander un prêt</a></li>
+                        {% elif current_user.role == 'president' %}
+                            <li><a href="/president/dashboard" class="{% if request.path == '/president/dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Tableau de bord</a></li>
+                            <li><a href="/president/loans" class="{% if request.path.startswith('/president/loans') %}active{% endif %}"><i class="fas fa-file-contract"></i> Demandes de prêt</a></li>
+                            <li><a href="/president/members" class="{% if request.path == '/president/members' %}active{% endif %}"><i class="fas fa-users"></i> Membres</a></li>
+                            <li><a href="/president/reports" class="{% if request.path == '/president/reports' %}active{% endif %}"><i class="fas fa-chart-bar"></i> Rapports</a></li>
+                        {% elif current_user.role == 'tresorier' %}
+                            <li><a href="/tresorier/dashboard" class="{% if request.path == '/tresorier/dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Tableau de bord</a></li>
+                            <li><a href="/tresorier/contributions" class="{% if request.path.startswith('/tresorier/contributions') %}active{% endif %}"><i class="fas fa-money-bill-wave"></i> Cotisations</a></li>
+                            <li><a href="/tresorier/repayments" class="{% if request.path == '/tresorier/repayments' %}active{% endif %}"><i class="fas fa-coins"></i> Remboursements</a></li>
+                        {% elif current_user.role == 'secretaire' %}
+                            <li><a href="/secretaire/dashboard" class="{% if request.path == '/secretaire/dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Tableau de bord</a></li>
+                            <li><a href="/secretaire/monthly-report" class="{% if request.path.startswith('/secretaire/monthly-report') %}active{% endif %}"><i class="fas fa-file-alt"></i> Rapports mensuels</a></li>
+                            <li><a href="/secretaire/history" class="{% if request.path == '/secretaire/history' %}active{% endif %}"><i class="fas fa-history"></i> Historique</a></li>
+                            <li><a href="/secretaire/announcements" class="{% if request.path == '/secretaire/announcements' %}active{% endif %}"><i class="fas fa-bell"></i> Annonces</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                <main class="col-md-10" style="padding: 20px;">
+            {% else %}
+                <main class="col-12" style="padding: 20px;">
+            {% endif %}
+
+            {% block content %}{% endblock %}
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5">
+        <div class="container text-center">
+            <p>&copy; 2024 Unissons la Main. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
