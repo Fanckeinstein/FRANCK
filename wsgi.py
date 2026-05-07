@@ -1,20 +1,21 @@
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment variables from .env file
 load_dotenv()
 
-# Set environment to production if not already set
-if 'FLASK_ENV' not in os.environ:
-    os.environ['FLASK_ENV'] = 'production'
-
-if 'DEBUG' not in os.environ:
-    os.environ['DEBUG'] = 'False'
+# Ensure production settings
+os.environ.setdefault('FLASK_ENV', 'production')
+os.environ.setdefault('DEBUG', 'False')
 
 from app import create_app
 
-# Create the application
+# Create and configure the WSGI application
 app = create_app()
 
+# Gunicorn will use this app variable
 if __name__ == '__main__':
-    app.run()
+    # This is for local testing only
+    # In production, Gunicorn will call app directly
+    port = int(os.getenv('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)

@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: unissons-la-main
+    runtime: python312
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: VERIF_DEV_MODE
+        value: "0"
+      - key: SECRET_KEY
+        value: ""  # À remplir manuellement
+      - key: SMTP_PASS
+        value: ""  # À remplir manuellement (SendGrid API key)
+      - key: TWILIO_AUTH_TOKEN
+        value: ""  # À remplir manuellement

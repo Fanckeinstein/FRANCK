@@ -42,4 +42,7 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True, port=5000)
+    # Pour Render: utiliser PORT ou 5000 par défaut
+    port = int(os.getenv('PORT', 5000))
+    debug = os.getenv('DEBUG', 'True').lower() == 'true'
+    app.run(debug=debug, host='0.0.0.0', port=port)
