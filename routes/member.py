@@ -6,6 +6,26 @@ from datetime import datetime, timedelta
 from sqlalchemy import func
 from verification.utils import send_email
 
+
+def _send_contribution_confirmation(contribution):
+    """Send the default confirmation message to the member after payment validation."""
+    member = db.session.get(User, contribution.user_id)
+    if not member or not member.email:
+        return
+
+    subject = f'Confirmation de votre cotisation - {contribution.month}'
+    body = (
+        f"Bonjour {member.full_name},\n\n"
+        f"Votre cotisation pour ce mois a bien été prise en compte.\n\n"
+        f"Détails :\n"
+        f"- Mois : {contribution.month}\n"
+        f"- Montant : {float(contribution.amount):.0f} FCFA\n"
+        f"- Moyen de paiement : {contribution.payment_method or 'non précisé'}\n\n"
+        f"Merci pour votre contribution.\n"
+        f"Unissons la Main"
+    )
+    send_email(member.email, subject, body)
+
 member_bp = Blueprint('member', __name__, url_prefix='/member', template_folder='../templates')
 
 
@@ -249,5 +269,7 @@ def pay_contribution():
     )
     db.session.add(transaction)
     db.session.commit()
+
+    _send_contribution_confirmation(contribution)
     
     return jsonify({'ok': True, 'message': 'Contribution marked as paid'})
