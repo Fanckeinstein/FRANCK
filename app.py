@@ -37,6 +37,81 @@ def create_app():
     app.register_blueprint(tresorier_bp)
     app.register_blueprint(secretaire_bp)
 
+    # Register CLI commands
+    @app.cli.command()
+    def seed_db():
+        """Seed the database with test users (president, tresorier, secretaire, members)"""
+        from models import User
+        
+        # Create all tables first
+        db.create_all()
+        
+        # Check if users already exist
+        existing_user = db.session.query(User).first()
+        if existing_user:
+            print("✓ Database already has users, skipping seed")
+            return
+        
+        # Create sample users
+        users_data = [
+            {
+                'username': 'president1',
+                'full_name': 'Jean Dupont',
+                'email': 'president@unissonslamain.local',
+                'phone': '+250789123456',
+                'role': 'president'
+            },
+            {
+                'username': 'tresorier1',
+                'full_name': 'Marie Traore',
+                'email': 'tresorier@unissonslamain.local',
+                'phone': '+250789123457',
+                'role': 'tresorier'
+            },
+            {
+                'username': 'secretaire1',
+                'full_name': 'Sophie Bernard',
+                'email': 'secretaire@unissonslamain.local',
+                'phone': '+250789123458',
+                'role': 'secretaire'
+            },
+            {
+                'username': 'member1',
+                'full_name': 'Pierre Martin',
+                'email': 'member1@unissonslamain.local',
+                'phone': '+250789123459',
+                'role': 'member'
+            },
+            {
+                'username': 'member2',
+                'full_name': 'Alice Johnson',
+                'email': 'member2@unissonslamain.local',
+                'phone': '+250789123460',
+                'role': 'member'
+            },
+            {
+                'username': 'member3',
+                'full_name': 'Bob Leblanc',
+                'email': 'member3@unissonslamain.local',
+                'phone': '+250789123461',
+                'role': 'member'
+            }
+        ]
+        
+        users = []
+        for user_data in users_data:
+            user = User(**user_data, is_active=True)
+            user.set_password('password123')
+            users.append(user)
+            db.session.add(user)
+        
+        db.session.commit()
+        print(f"✓ Database seeded with {len(users)} users")
+        print("✓ Test credentials:")
+        print("  - president1 / password123")
+        print("  - tresorier1 / password123")
+        print("  - secretaire1 / password123")
+
     return app
 
 
