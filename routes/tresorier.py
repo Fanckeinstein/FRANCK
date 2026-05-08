@@ -103,14 +103,27 @@ def validate_contribution():
     if current_user.role not in ['tresorier', 'president']:
         return jsonify({'error': 'Unauthorized'}), 403
     
-    data = request.get_json()
+    data = request.get_json(silent=True) or request.form
+    if not data:
+        return jsonify({'error': 'Invalid payload'}), 400
+
     contribution_id = data.get('contribution_id')
     payment_method = data.get('payment_method', 'cash')
     payment_proof = data.get('payment_proof')
+
+    if not contribution_id:
+        return jsonify({'error': 'Contribution ID is required'}), 400
+
+    valid_methods = {'cash', 'mobile_money', 'bank'}
+    if payment_method not in valid_methods:
+        return jsonify({'error': 'Invalid payment method'}), 400
     
     contribution = db.session.query(Contribution).filter_by(id=contribution_id).first()
     if not contribution:
         return jsonify({'error': 'Contribution not found'}), 404
+
+    if contribution.status == 'paid':
+        return jsonify({'ok': True, 'message': 'Contribution already validated'})
     
     contribution.status = 'paid'
     contribution.payment_method = payment_method
