@@ -2,8 +2,9 @@ from flask import Blueprint, request, jsonify, render_template, redirect, url_fo
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
-from models import User
-from datetime import datetime
+from models import User, VerificationCode
+from datetime import datetime, timedelta
+from verification.utils import generate_code, send_email, send_whatsapp
 
 auth_bp = Blueprint('auth', __name__, template_folder='../templates')
 
@@ -131,6 +132,137 @@ def register():
         return redirect(url_for('auth.login'))
 
     return render_template('auth/register.html')
+
+
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Start password reset by sending a verification code."""
+    if request.method == 'POST':
+        data = request.get_json() if request.is_json else request.form
+        identifier = (data.get('identifier') or '').strip()
+
+        if not identifier:
+            msg = 'Veuillez renseigner votre nom utilisateur, email ou numero.'
+            if request.is_json:
+                return jsonify({'ok': False, 'error': msg}), 400
+            flash(msg, 'danger')
+            return redirect(url_for('auth.forgot_password'))
+
+        user = db.session.query(User).filter(
+            (User.username == identifier) |
+            (User.email == identifier) |
+            (User.phone == identifier)
+        ).first()
+
+        # Return a generic message even when no account is found.
+        success_msg = 'Si ce compte existe, un code de reinitialisation a ete envoye.'
+
+        if user:
+            code = generate_code()
+            expires = datetime.utcnow() + timedelta(minutes=15)
+
+            vc = VerificationCode(
+                user_id=user.id,
+                email=user.email,
+                phone=user.phone,
+                code=code,
+                purpose='reset_password',
+                expires_at=expires,
+                verified=False
+            )
+            db.session.add(vc)
+            db.session.commit()
+
+            subject = 'Code de reinitialisation du mot de passe'
+            body = (
+                f"Bonjour {user.full_name},\n\n"
+                f"Voici votre code de reinitialisation: {code}\n"
+                f"Ce code expire dans 15 minutes.\n\n"
+                f"Si vous n'etes pas a l'origine de cette demande, ignorez ce message.\n\n"
+                f"Unissons la Main"
+            )
+
+            if user.email:
+                send_email(user.email, subject, body)
+            if user.phone:
+                send_whatsapp(user.phone, body)
+
+        if request.is_json:
+            return jsonify({'ok': True, 'message': success_msg})
+
+        flash(success_msg, 'success')
+        return redirect(url_for('auth.reset_password'))
+
+    return render_template('auth/forgot_password.html')
+
+
+@auth_bp.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    """Reset password using a verification code."""
+    if request.method == 'POST':
+        data = request.get_json() if request.is_json else request.form
+        username = (data.get('username') or '').strip()
+        code = (data.get('code') or '').strip()
+        new_password = data.get('new_password')
+        confirm_password = data.get('confirm_password')
+
+        if not username or not code or not new_password or not confirm_password:
+            msg = 'Tous les champs sont obligatoires.'
+            if request.is_json:
+                return jsonify({'ok': False, 'error': msg}), 400
+            flash(msg, 'danger')
+            return redirect(url_for('auth.reset_password'))
+
+        if new_password != confirm_password:
+            msg = 'Les mots de passe ne correspondent pas.'
+            if request.is_json:
+                return jsonify({'ok': False, 'error': msg}), 400
+            flash(msg, 'danger')
+            return redirect(url_for('auth.reset_password'))
+
+        if len(new_password) < 6:
+            msg = 'Le mot de passe doit contenir au moins 6 caracteres.'
+            if request.is_json:
+                return jsonify({'ok': False, 'error': msg}), 400
+            flash(msg, 'danger')
+            return redirect(url_for('auth.reset_password'))
+
+        user = db.session.query(User).filter_by(username=username).first()
+        if not user:
+            msg = 'Code invalide ou expire.'
+            if request.is_json:
+                return jsonify({'ok': False, 'error': msg}), 400
+            flash(msg, 'danger')
+            return redirect(url_for('auth.reset_password'))
+
+        verification = db.session.query(VerificationCode).filter(
+            VerificationCode.user_id == user.id,
+            VerificationCode.purpose == 'reset_password',
+            VerificationCode.code == code,
+            VerificationCode.verified == False,
+            VerificationCode.expires_at >= datetime.utcnow()
+        ).order_by(VerificationCode.created_at.desc()).first()
+
+        if not verification:
+            msg = 'Code invalide ou expire.'
+            if request.is_json:
+                return jsonify({'ok': False, 'error': msg}), 400
+            flash(msg, 'danger')
+            return redirect(url_for('auth.reset_password'))
+
+        user.set_password(new_password)
+        user.updated_at = datetime.utcnow()
+        verification.verified = True
+        db.session.commit()
+
+        success_msg = 'Mot de passe reinitialise avec succes. Vous pouvez vous connecter.'
+        if request.is_json:
+            return jsonify({'ok': True, 'message': success_msg})
+
+        flash(success_msg, 'success')
+        return redirect(url_for('auth.login'))
+
+    return render_template('auth/reset_password.html')
 
 
 @auth_bp.route('/profile', methods=['GET', 'POST'])
