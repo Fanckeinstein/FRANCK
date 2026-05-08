@@ -43,7 +43,7 @@ def dashboard():
 @login_required
 def get_stats():
     """Get general statistics (role-dependent)"""
-    total_members = db.session.query(func.count(User.id)).filter_by(role='member').scalar()
+    total_members = db.session.query(func.count(User.id)).filter_by(role='member', is_active=True).scalar()
     total_contributions = db.session.query(func.sum(Contribution.amount)).filter_by(status='paid').scalar() or 0
     total_loans = db.session.query(func.sum(Loan.amount)).filter_by(status='approved').scalar() or 0
     

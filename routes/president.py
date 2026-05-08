@@ -20,7 +20,7 @@ def check_role():
 def dashboard():
     """President dashboard"""
     # Get all statistics
-    total_members = db.session.query(func.count(User.id)).filter_by(role='member').scalar()
+    total_members = db.session.query(func.count(User.id)).filter_by(role='member', is_active=True).scalar()
     total_contributions = db.session.query(func.sum(Contribution.amount)).filter_by(status='paid').scalar() or 0
     total_loans_approved = db.session.query(func.sum(Loan.amount)).filter_by(status='approved').scalar() or 0
     total_loans_pending = db.session.query(func.count(Loan.id)).filter_by(status='pending').scalar()
