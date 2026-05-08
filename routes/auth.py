@@ -198,7 +198,7 @@ def forgot_password():
 
 @auth_bp.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
-    """Reset password using a verification code."""
+    """Reset password with optional verification code (fallback mode without reception check)."""
     if request.method == 'POST':
         data = request.get_json() if request.is_json else request.form
         username = (data.get('username') or '').strip()
@@ -206,7 +206,7 @@ def reset_password():
         new_password = data.get('new_password')
         confirm_password = data.get('confirm_password')
 
-        if not username or not code or not new_password or not confirm_password:
+        if not username or not new_password or not confirm_password:
             msg = 'Tous les champs sont obligatoires.'
             if request.is_json:
                 return jsonify({'ok': False, 'error': msg}), 400
@@ -229,30 +229,35 @@ def reset_password():
 
         user = db.session.query(User).filter_by(username=username).first()
         if not user:
-            msg = 'Code invalide ou expire.'
+            msg = 'Compte introuvable.'
             if request.is_json:
                 return jsonify({'ok': False, 'error': msg}), 400
             flash(msg, 'danger')
             return redirect(url_for('auth.reset_password'))
 
-        verification = db.session.query(VerificationCode).filter(
-            VerificationCode.user_id == user.id,
-            VerificationCode.purpose == 'reset_password',
-            VerificationCode.code == code,
-            VerificationCode.verified == False,
-            VerificationCode.expires_at >= datetime.utcnow()
-        ).order_by(VerificationCode.created_at.desc()).first()
+        verification = None
+        if code:
+            verification = db.session.query(VerificationCode).filter(
+                VerificationCode.user_id == user.id,
+                VerificationCode.purpose == 'reset_password',
+                VerificationCode.code == code,
+                VerificationCode.verified == False,
+                VerificationCode.expires_at >= datetime.utcnow()
+            ).order_by(VerificationCode.created_at.desc()).first()
 
-        if not verification:
-            msg = 'Code invalide ou expire.'
-            if request.is_json:
-                return jsonify({'ok': False, 'error': msg}), 400
-            flash(msg, 'danger')
-            return redirect(url_for('auth.reset_password'))
+            if not verification:
+                msg = 'Code invalide ou expire.'
+                if request.is_json:
+                    return jsonify({'ok': False, 'error': msg}), 400
+                flash(msg, 'danger')
+                return redirect(url_for('auth.reset_password'))
 
         user.set_password(new_password)
         user.updated_at = datetime.utcnow()
-        verification.verified = True
+
+        if verification:
+            verification.verified = True
+
         db.session.commit()
 
         success_msg = 'Mot de passe reinitialise avec succes. Vous pouvez vous connecter.'
