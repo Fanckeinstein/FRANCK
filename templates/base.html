@@ -260,6 +260,7 @@
                             <li><a href="/president/dashboard" class="{% if request.path == '/president/dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Tableau de bord</a></li>
                             <li><a href="/president/loans" class="{% if request.path.startswith('/president/loans') %}active{% endif %}"><i class="fas fa-file-contract"></i> Demandes de prêt</a></li>
                             <li><a href="/president/members" class="{% if request.path == '/president/members' %}active{% endif %}"><i class="fas fa-users"></i> Membres</a></li>
+                            <li><a href="/president/members/removed" class="{% if request.path.startswith('/president/members/removed') %}active{% endif %}"><i class="fas fa-user-slash"></i> Membres retirés</a></li>
                             <li><a href="/president/reports" class="{% if request.path == '/president/reports' %}active{% endif %}"><i class="fas fa-chart-bar"></i> Rapports</a></li>
                             <li><a href="/president/audit-logs" class="{% if request.path.startswith('/president/audit-logs') %}active{% endif %}"><i class="fas fa-history"></i> Historique d'audit</a></li>
                             <li><a href="/president/admin/clear-data" class="{% if request.path.startswith('/president/admin/clear-data') %}active{% endif %}"><i class="fas fa-broom"></i> Nettoyer la base</a></li>

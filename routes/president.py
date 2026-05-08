@@ -137,9 +137,81 @@ def reject_loan(loan_id):
 @president_bp.route('/members')
 def members():
     """View all members"""
-    members = db.session.query(User).filter_by(role='member').all()
+    members = db.session.query(User).filter_by(role='member', is_active=True).all()
     
     return render_template('president/members.html', members=members)
+
+
+@president_bp.route('/members/removed')
+def removed_members():
+    """View removed members"""
+    members = db.session.query(User).filter_by(role='member', is_active=False).order_by(User.created_at.desc()).all()
+
+    return render_template('president/removed_members.html', members=members)
+
+
+@president_bp.route('/api/member/<int:member_id>/remove', methods=['POST'])
+@login_required
+def remove_member(member_id):
+    """Deactivate a member account so the president can remove inactive members without deleting history."""
+    if current_user.role != 'president':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    member = db.session.query(User).filter_by(id=member_id, role='member').first()
+    if not member:
+        return jsonify({'error': 'Member not found'}), 404
+
+    if not member.is_active:
+        return jsonify({'error': 'Member already removed'}), 400
+
+    member.is_active = False
+
+    from models import AuditLog
+
+    audit = AuditLog(
+        action='member_removed',
+        performed_by=current_user.id,
+        description=f'Membre retiré par le président: {member.full_name} (@{member.username})',
+        affected_records=1,
+        details=f'user_id={member.id}, role={member.role}, email={member.email or ""}, phone={member.phone or ""}',
+        ip_address=request.remote_addr
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify({'ok': True, 'message': 'Member removed'})
+
+
+@president_bp.route('/api/member/<int:member_id>/reactivate', methods=['POST'])
+@login_required
+def reactivate_member(member_id):
+    """Reactivate a previously removed member."""
+    if current_user.role != 'president':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    member = db.session.query(User).filter_by(id=member_id, role='member').first()
+    if not member:
+        return jsonify({'error': 'Member not found'}), 404
+
+    if member.is_active:
+        return jsonify({'error': 'Member already active'}), 400
+
+    member.is_active = True
+
+    from models import AuditLog
+
+    audit = AuditLog(
+        action='member_reactivated',
+        performed_by=current_user.id,
+        description=f'Membre réactivé par le président: {member.full_name} (@{member.username})',
+        affected_records=1,
+        details=f'user_id={member.id}, role={member.role}, email={member.email or ""}, phone={member.phone or ""}',
+        ip_address=request.remote_addr
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify({'ok': True, 'message': 'Member reactivated'})
 
 
 @president_bp.route('/reports')

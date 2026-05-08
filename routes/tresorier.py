@@ -4,7 +4,7 @@ from extensions import db
 from models import User, Contribution, Loan, Transaction
 from datetime import datetime, timedelta
 from sqlalchemy import func
-from verification.utils import send_email
+from verification.utils import send_email, send_whatsapp
 
 tresorier_bp = Blueprint('tresorier', __name__, url_prefix='/tresorier', template_folder='../templates')
 
@@ -12,7 +12,7 @@ tresorier_bp = Blueprint('tresorier', __name__, url_prefix='/tresorier', templat
 def _send_contribution_confirmation(contribution):
     """Send the default confirmation message to the member after payment validation."""
     member = db.session.get(User, contribution.user_id)
-    if not member or not member.email:
+    if not member:
         return
 
     subject = f'Confirmation de votre cotisation - {contribution.month}'
@@ -26,7 +26,10 @@ def _send_contribution_confirmation(contribution):
         f"Merci pour votre contribution.\n"
         f"Unissons la Main"
     )
-    send_email(member.email, subject, body)
+    if member.email:
+        send_email(member.email, subject, body)
+    if member.phone:
+        send_whatsapp(member.phone, body)
 
 
 @tresorier_bp.before_request

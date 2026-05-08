@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Membres - Unissons la Main{% endblock %}
+{% block title %}Membres retirés - Unissons la Main{% endblock %}
 
 {% block content %}
-<h1 class="mb-4"><i class="fas fa-users"></i> Tous les membres</h1>
+<h1 class="mb-4"><i class="fas fa-user-slash"></i> Membres retirés</h1>
 
 <div class="card">
     <div class="table-responsive">
@@ -14,7 +14,6 @@
                     <th>Nom d'utilisateur</th>
                     <th>Email</th>
                     <th>Téléphone</th>
-                    <th>Status</th>
                     <th>Inscrit le</th>
                     <th>Actions</th>
                 </tr>
@@ -27,30 +26,27 @@
                             <td>{{ member.username }}</td>
                             <td>{{ member.email or '-' }}</td>
                             <td>{{ member.phone or '-' }}</td>
-                            <td>
-                                <span class="badge bg-success">Actif</span>
-                            </td>
                             <td>{{ member.created_at.strftime('%d/%m/%Y') }}</td>
                             <td>
-                                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#removeMemberModal{{ loop.index }}">
-                                    <i class="fas fa-user-times"></i> Retirer
+                                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#reactivateMemberModal{{ loop.index }}">
+                                    <i class="fas fa-user-check"></i> Réactiver
                                 </button>
 
-                                <div class="modal fade" id="removeMemberModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal fade" id="reactivateMemberModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h5 class="modal-title">Retirer ce membre</h5>
+                                                <h5 class="modal-title">Réactiver ce membre</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
                                                 <p class="mb-1"><strong>{{ member.full_name }}</strong></p>
-                                                <p class="mb-0 text-muted">Cette action désactive le compte et retire ce membre de la liste active sans supprimer son historique.</p>
+                                                <p class="mb-0 text-muted">Cette action remet le compte en service et le réaffiche dans la liste active.</p>
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                                <button type="button" class="btn btn-danger" onclick="removeMember({{ member.id }}, {{ loop.index }})">
-                                                    <i class="fas fa-user-times"></i> Retirer
+                                                <button type="button" class="btn btn-success" onclick="reactivateMember({{ member.id }})">
+                                                    <i class="fas fa-user-check"></i> Réactiver
                                                 </button>
                                             </div>
                                         </div>
@@ -61,7 +57,7 @@
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">Aucun membre</td>
+                        <td colspan="6" class="text-center text-muted py-4">Aucun membre retiré</td>
                     </tr>
                 {% endif %}
             </tbody>
@@ -70,8 +66,8 @@
 </div>
 
 <script>
-function removeMember(memberId, index) {
-    fetch(`/president/api/member/${memberId}/remove`, {
+function reactivateMember(memberId) {
+    fetch(`/president/api/member/${memberId}/reactivate`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({})
@@ -83,7 +79,7 @@ function removeMember(memberId, index) {
             return;
         }
 
-        alert(data.error || 'Impossible de retirer ce membre');
+        alert(data.error || 'Impossible de réactiver ce membre');
     });
 }
 </script>
