@@ -107,6 +107,23 @@ def loans():
     return render_template('member/loans.html', loans=loans)
 
 
+@member_bp.route('/admin-team')
+def admin_team():
+    """Show administrative team contacts to members."""
+    admin_team = db.session.query(User).filter(
+        User.role.in_(['president', 'tresorier', 'secretaire']),
+        User.is_active == True
+    ).order_by(User.role.asc(), User.full_name.asc()).all()
+
+    role_labels = {
+        'president': 'President',
+        'tresorier': 'Tresorier',
+        'secretaire': 'Secretaire'
+    }
+
+    return render_template('member/admin_team.html', admin_team=admin_team, role_labels=role_labels)
+
+
 @member_bp.route('/request-loan', methods=['GET', 'POST'])
 def request_loan():
     """Request an emergency loan"""

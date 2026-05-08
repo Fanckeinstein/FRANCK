@@ -256,6 +256,7 @@
                             <li><a href="/member/contributions" class="{% if request.path.startswith('/member/contributions') %}active{% endif %}"><i class="fas fa-money-bill"></i> Mes cotisations</a></li>
                             <li><a href="/member/loans" class="{% if request.path.startswith('/member/loans') %}active{% endif %}"><i class="fas fa-hand-holding-usd"></i> Mes prêts</a></li>
                             <li><a href="/member/request-loan" class="{% if request.path == '/member/request-loan' %}active{% endif %}"><i class="fas fa-plus-circle"></i> Demander un prêt</a></li>
+                            <li><a href="/member/admin-team" class="{% if request.path.startswith('/member/admin-team') %}active{% endif %}"><i class="fas fa-address-book"></i> Equipe administrative</a></li>
                         {% elif current_user.role == 'president' %}
                             <li><a href="/president/dashboard" class="{% if request.path == '/president/dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Tableau de bord</a></li>
                             <li><a href="/president/loans" class="{% if request.path.startswith('/president/loans') %}active{% endif %}"><i class="fas fa-file-contract"></i> Demandes de prêt</a></li>
@@ -290,7 +291,7 @@
     <!-- Footer -->
     <footer class="mt-5">
         <div class="container text-center">
-            <p>&copy; 2024 Unissons la Main. Tous droits réservés.</p>
+            <p>&copy; 2026 Tous droits reserves. Site cree par KOETA Samasja Franck, Tel:+22607219586/51169595</p>
         </div>
     </footer>
 
