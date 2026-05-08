@@ -132,6 +132,7 @@ def request_loan():
         amount_raw = data.get('amount')
         amount = float(amount_raw) if amount_raw not in (None, '') else None
         reason = data.get('reason')
+        loan_policy_acceptance = data.get('loan_policy_acceptance')
         
         if not amount or not reason:
             msg = 'Amount and reason are required'
@@ -142,6 +143,13 @@ def request_loan():
         
         if amount <= 0:
             msg = 'Amount must be positive'
+            if request.is_json:
+                return jsonify({'ok': False, 'error': msg}), 400
+            flash(msg, 'danger')
+            return redirect(url_for('member.request_loan'))
+
+        if loan_policy_acceptance not in ['yes', 'on', True]:
+            msg = 'Vous devez accepter la politique de remboursement avant de continuer.'
             if request.is_json:
                 return jsonify({'ok': False, 'error': msg}), 400
             flash(msg, 'danger')

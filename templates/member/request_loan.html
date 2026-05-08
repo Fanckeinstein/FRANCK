@@ -13,6 +13,13 @@
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i> Votre demande sera examinée par le président. Vous serez notifié de la décision.
                 </div>
+
+                <div class="alert alert-warning">
+                    <h5 class="mb-2"><i class="fas fa-file-contract"></i> Politique de remboursement des prêts</h5>
+                    <p class="mb-2">En soumettant cette demande, vous reconnaissez que le prêt est accordé pour une situation urgente et que son remboursement doit rester une priorité de bonne foi.</p>
+                    <p class="mb-2">Nous comptons sur la bonne volonté de chacun pour rembourser ses frais de prêts dans les délais convenus afin de préserver la solidarité, la confiance et la continuité des aides au sein de l'association.</p>
+                    <p class="mb-0">Tout retard ou difficulté doit être signalé rapidement au président ou au trésorier pour trouver une solution responsable.</p>
+                </div>
                 
                 <form method="POST" action="/member/request-loan">
                     <div class="mb-3">
@@ -24,6 +31,13 @@
                     <div class="mb-3">
                         <label for="reason" class="form-label">Raison de l'urgence</label>
                         <textarea class="form-control" id="reason" name="reason" rows="5" required placeholder="Décrivez votre situation..."></textarea>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input class="form-check-input" type="checkbox" id="loan_policy_acceptance" name="loan_policy_acceptance" value="yes" required>
+                        <label class="form-check-label" for="loan_policy_acceptance">
+                            J'ai lu et j'accepte la politique de remboursement des prêts.
+                        </label>
                     </div>
                     
                     <div class="d-grid gap-2">
