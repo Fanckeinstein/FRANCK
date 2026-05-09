@@ -9,6 +9,15 @@ migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
+    # Ensure instance path is writable in serverless environments (read-only filesystem otherwise)
+    import tempfile
+    instance_dir = os.getenv('INSTANCE_PATH', None) or os.path.join(tempfile.gettempdir(), 'unissons_instance')
+    try:
+        os.makedirs(instance_dir, exist_ok=True)
+        app.instance_path = instance_dir
+    except OSError:
+        # Fall back to default (may be read-only in some environments)
+        pass
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-prod')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///unissons.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -47,6 +56,7 @@ def create_app():
     from routes.president import president_bp
     from routes.tresorier import tresorier_bp
     from routes.secretaire import secretaire_bp
+    from routes.admin import bp as admin_bp
     
     app.register_blueprint(verification_bp, url_prefix='/verify')
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -55,6 +65,7 @@ def create_app():
     app.register_blueprint(president_bp)
     app.register_blueprint(tresorier_bp)
     app.register_blueprint(secretaire_bp)
+    app.register_blueprint(admin_bp)
 
     # Register CLI commands
     @app.cli.command()
