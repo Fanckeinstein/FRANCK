@@ -202,7 +202,18 @@ function validateContribution(contribId, index) {
     })
     .then(data => {
         if (data.ok) {
-            location.reload();
+            const whatsappUrl = data.whatsapp && (data.whatsapp.mobile || data.whatsapp.web);
+            if (whatsappUrl) {
+                const link = document.createElement('a');
+                link.href = whatsappUrl;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            }
+
+            setTimeout(() => location.reload(), 1000);
             return;
         }
 
