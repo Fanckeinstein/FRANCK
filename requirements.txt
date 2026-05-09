@@ -8,3 +8,5 @@ requests==2.31.0
 Pillow>=9.0.0
 pytesseract>=0.3.10
 gunicorn==21.2.0
+Flask-Migrate==4.1.0
+alembic==1.18.4
