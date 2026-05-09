@@ -17,10 +17,6 @@ def seed():
     # Create tables if they don't exist
     db.create_all()
 
-    # Check existing
-    if db.session.query(User).first():
-        return jsonify({'status': 'already_seeded'}), 200
-
     users_data = [
         {'username': 'president1', 'full_name': 'Jean Dupont', 'email': 'president@unissonslamain.local', 'phone': '+250789123456', 'role': 'president'},
         {'username': 'tresorier1', 'full_name': 'Marie Traore', 'email': 'tresorier@unissonslamain.local', 'phone': '+250789123457', 'role': 'tresorier'},
@@ -30,12 +26,23 @@ def seed():
         {'username': 'member3', 'full_name': 'Bob Leblanc', 'email': 'member3@unissonslamain.local', 'phone': '+250789123461', 'role': 'member'},
     ]
 
-    users = []
+    created = 0
+    updated = 0
     for u in users_data:
-        user = User(**u, is_active=True)
-        user.set_password('password123')
-        db.session.add(user)
-        users.append(user)
+        user = db.session.query(User).filter_by(username=u['username']).first()
+        if user:
+            user.full_name = u['full_name']
+            user.email = u['email']
+            user.phone = u['phone']
+            user.role = u['role']
+            user.is_active = True
+            user.set_password('password123')
+            updated += 1
+        else:
+            user = User(**u, is_active=True)
+            user.set_password('password123')
+            db.session.add(user)
+            created += 1
 
     db.session.commit()
-    return jsonify({'status': 'seeded', 'count': len(users)}), 201
+    return jsonify({'status': 'seeded', 'created': created, 'updated': updated}), 200
