@@ -8,6 +8,8 @@ from verification.utils import send_email, send_whatsapp
 from werkzeug.utils import secure_filename
 import os
 import re
+import tempfile
+from io import BytesIO
 try:
     import pytesseract
     from PIL import Image
@@ -251,16 +253,28 @@ def request_contribution():
             payment_reference = request.form.get('payment_reference')
             file = request.files.get('payment_proof')
             if file:
-                uploads_dir = os.path.join(os.getcwd(), 'static', 'uploads', 'receipts')
-                os.makedirs(uploads_dir, exist_ok=True)
                 filename = secure_filename(f"{current_user.username}_{month}_{file.filename}")
-                filepath = os.path.join(uploads_dir, filename)
-                file.save(filepath)
-                contribution.payment_proof = os.path.relpath(filepath, os.getcwd()).replace('\\','/')
-                # Try OCR extraction of payment reference from image (if available)
-                if OCR_ENABLED and not contribution.payment_reference:
+                uploaded_bytes = file.read()
+                # Try to persist the image locally when the filesystem allows it.
+                # On serverless hosts, fall back to /tmp so we can still OCR without crashing.
+                try:
+                    uploads_dir = os.path.join(os.getcwd(), 'static', 'uploads', 'receipts')
+                    os.makedirs(uploads_dir, exist_ok=True)
+                    filepath = os.path.join(uploads_dir, filename)
+                    with open(filepath, 'wb') as handle:
+                        handle.write(uploaded_bytes)
+                    contribution.payment_proof = os.path.relpath(filepath, os.getcwd()).replace('\\', '/')
+                except OSError:
+                    temp_dir = os.path.join(tempfile.gettempdir(), 'unissons_uploads', 'receipts')
+                    os.makedirs(temp_dir, exist_ok=True)
+                    filepath = os.path.join(temp_dir, filename)
+                    with open(filepath, 'wb') as handle:
+                        handle.write(uploaded_bytes)
+
+                # Try OCR extraction of payment reference from the uploaded image.
+                if OCR_ENABLED and uploaded_bytes and not contribution.payment_reference:
                     try:
-                        img = Image.open(filepath)
+                        img = Image.open(BytesIO(uploaded_bytes))
                         text = pytesseract.image_to_string(img)
                         # Look for transaction ID patterns:
                         # Orange Money: MP260508.1340.3149810 or MP26050813403149810
