@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, send_file
 from flask_login import login_required, current_user
 from extensions import db
 from models import User, Contribution, Loan, Transaction
 from datetime import datetime, timedelta
 from sqlalchemy import func
 from verification.utils import send_email, send_whatsapp
+import io
 
 tresorier_bp = Blueprint('tresorier', __name__, url_prefix='/tresorier', template_folder='../templates')
 
@@ -254,3 +255,136 @@ def record_repayment(loan_id):
     db.session.commit()
     
     return jsonify({'ok': True, 'message': 'Repayment recorded'})
+
+
+def _month_expr(col):
+    """Return a SQL expression that extracts YYYY-MM from a datetime column in a DB-agnostic way."""
+    # Use engine dialect name (more reliable) and map to the appropriate function
+    try:
+        dialect_name = (db.engine.dialect.name or '').lower()
+    except Exception:
+        dialect_name = 'sqlite'
+
+    if 'sqlite' in dialect_name:
+        return func.strftime('%Y-%m', col)
+    # Postgres
+    if 'postgres' in dialect_name or 'postgresql' in dialect_name:
+        return func.to_char(col, 'YYYY-MM')
+    # Fallback to to_char if available
+    return func.to_char(col, 'YYYY-MM')
+
+
+@tresorier_bp.route('/api/report/<month>')
+@login_required
+def api_report(month):
+    """Return a treasurer report for a given month as JSON."""
+    if current_user.role not in ['tresorier', 'president']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    # Contributions summary by status for the month
+    contrib_rows = db.session.query(
+        func.coalesce(func.count(Contribution.id), 0),
+        func.coalesce(func.sum(Contribution.amount), 0),
+        Contribution.status
+    ).filter(Contribution.month == month).group_by(Contribution.status).all()
+
+    # Per-member totals (paid only)
+    per_member = db.session.query(
+        User.id,
+        User.full_name,
+        func.coalesce(func.sum(Contribution.amount), 0)
+    ).join(Contribution, Contribution.user_id == User.id).filter(
+        Contribution.month == month,
+        Contribution.status == 'paid'
+    ).group_by(User.id, User.full_name).order_by(User.full_name).all()
+
+    # Transactions for the month
+    month_expr = _month_expr(Transaction.created_at)
+    transactions = db.session.query(Transaction).filter(month_expr == month).order_by(Transaction.created_at.desc()).limit(1000).all()
+
+    # Loans summary (approved/repaid) for context
+    loan_month_expr = _month_expr(Loan.requested_at)
+    loans_approved = db.session.query(func.count(Loan.id), func.coalesce(func.sum(Loan.amount), 0)).filter(
+        loan_month_expr == month,
+        Loan.status == 'approved'
+    ).first()
+
+    return jsonify({
+        'month': month,
+        'contributions': [
+            {'status': r[2], 'count': int(r[0] or 0), 'amount': float(r[1] or 0)} for r in contrib_rows
+        ],
+        'per_member': [
+            {'user_id': m[0], 'full_name': m[1], 'amount': float(m[2] or 0)} for m in per_member
+        ],
+        'transactions': [
+            {
+                'id': t.id,
+                'type': t.type,
+                'user_id': t.user_id,
+                'amount': float(t.amount),
+                'description': t.description,
+                'created_at': t.created_at.isoformat()
+            } for t in transactions
+        ],
+        'loans_approved_count': int(loans_approved[0] or 0) if loans_approved else 0,
+        'loans_approved_amount': float(loans_approved[1] or 0) if loans_approved else 0
+    })
+
+
+@tresorier_bp.route('/report/export/<format>')
+@login_required
+def export_report(format):
+    """Export treasurer report for a month as CSV (format=csv)."""
+    if current_user.role not in ['tresorier', 'president']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    month = request.args.get('month', datetime.utcnow().strftime('%Y-%m'))
+
+    if format != 'csv':
+        return jsonify({'error': 'Format not supported'}), 400
+
+    # Build CSV: transactions + contributions
+    output = io.StringIO()
+    writer = __import__('csv').writer(output)
+
+    writer.writerow(['Section'])
+    writer.writerow(['Contributions for', month])
+    writer.writerow(['Status', 'Count', 'Amount'])
+    contrib_rows = db.session.query(
+        func.coalesce(func.count(Contribution.id), 0),
+        func.coalesce(func.sum(Contribution.amount), 0),
+        Contribution.status
+    ).filter(Contribution.month == month).group_by(Contribution.status).all()
+    for r in contrib_rows:
+        writer.writerow([r[2], int(r[0] or 0), float(r[1] or 0)])
+
+    writer.writerow([])
+    writer.writerow(['Per member (paid)'])
+    writer.writerow(['Member', 'Amount'])
+    per_member = db.session.query(
+        User.full_name,
+        func.coalesce(func.sum(Contribution.amount), 0)
+    ).join(Contribution, Contribution.user_id == User.id).filter(
+        Contribution.month == month,
+        Contribution.status == 'paid'
+    ).group_by(User.full_name).order_by(User.full_name).all()
+    for m in per_member:
+        writer.writerow([m[0], float(m[1] or 0)])
+
+    writer.writerow([])
+    writer.writerow(['Transactions'])
+    writer.writerow(['Type', 'User', 'Amount', 'Date', 'Description'])
+    month_expr = _month_expr(Transaction.created_at)
+    transactions = db.session.query(Transaction).filter(month_expr == month).order_by(Transaction.created_at.desc()).all()
+    for t in transactions:
+        user = db.session.get(User, t.user_id)
+        writer.writerow([t.type, user.full_name if user else '', float(t.amount), t.created_at.isoformat(), t.description])
+
+    output.seek(0)
+    return send_file(
+        io.BytesIO(output.getvalue().encode()),
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f'tresorier_report_{month}.csv'
+    )
