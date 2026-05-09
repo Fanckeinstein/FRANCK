@@ -139,6 +139,31 @@ venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 ```
 
+### Installer Tesseract OCR (optionnel, pour extraction automatique des références)
+
+Pour activer l'OCR côté serveur (extraction automatique de la `Trans id` depuis la capture de reçu), installe le moteur Tesseract sur le serveur.
+
+- Windows (choco) :
+```powershell
+choco install tesseract -y
+```
+- Ubuntu/Debian :
+```bash
+sudo apt update
+sudo apt install -y tesseract-ocr
+```
+- macOS (Homebrew) :
+```bash
+brew install tesseract
+```
+
+Après installation, vérifie la disponibilité :
+```bash
+tesseract --version
+```
+
+Si tesseract n'est pas installé, l'application tombera proprement en retour arrière de l'OCR et exigera la saisie manuelle de la référence.
+
 ### 4. Configure `.env`
 ```bash
 cp .env.example .env

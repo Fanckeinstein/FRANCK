@@ -7,6 +7,15 @@ from sqlalchemy import func
 from verification.utils import send_email, send_whatsapp
 from werkzeug.utils import secure_filename
 import os
+import re
+try:
+    import pytesseract
+    from PIL import Image
+    OCR_ENABLED = True
+except Exception:
+    pytesseract = None
+    Image = None
+    OCR_ENABLED = False
 
 
 def _send_contribution_confirmation(contribution):
@@ -248,6 +257,18 @@ def request_contribution():
                 filepath = os.path.join(uploads_dir, filename)
                 file.save(filepath)
                 contribution.payment_proof = os.path.relpath(filepath, os.getcwd()).replace('\\','/')
+                # Try OCR extraction of payment reference from image (if available)
+                if OCR_ENABLED and not contribution.payment_reference:
+                    try:
+                        img = Image.open(filepath)
+                        text = pytesseract.image_to_string(img)
+                        # Look for patterns like MP260508.1340.3149810 or MP26050813403149810
+                        m = re.search(r"\b(MP[0-9\.]+)\b", text, re.IGNORECASE)
+                        if m:
+                            found = m.group(1).strip()
+                            contribution.payment_reference = found
+                    except Exception:
+                        pass
             if payment_reference:
                 contribution.payment_reference = payment_reference
 
