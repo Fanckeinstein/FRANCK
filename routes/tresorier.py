@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, send_file
+from urllib.parse import quote_plus
 from flask_login import login_required, current_user
 from extensions import db
 from models import User, Contribution, Loan, Transaction
@@ -149,7 +150,37 @@ def validate_contribution():
     db.session.commit()
 
     _send_contribution_confirmation(contribution)
-    
+    # Build WhatsApp links to open on treasurer device (mobile deep link + web link)
+    member = db.session.get(User, contribution.user_id)
+    whatsapp_links = None
+    if member and member.phone:
+        # Normalize phone to digits only (keep '+' if present)
+        digits = ''.join([c for c in (member.phone or '') if c.isdigit() or c == '+'])
+        if digits.startswith('00'):
+            digits = digits[2:]
+        text = (
+            f"Bonjour {member.full_name}, votre cotisation pour {contribution.month} de "
+            f"{int(contribution.amount)} FCFA a ete validee par {current_user.full_name}."
+        )
+        if contribution.payment_reference:
+            text += f" Reference: {contribution.payment_reference}."
+        q = quote_plus(text)
+        whatsapp_links = {
+            'web': f'https://wa.me/{digits}?text={q}',
+            'mobile': f'whatsapp://send?phone={digits}&text={q}'
+        }
+
+    # If request came from JS/API return JSON including WhatsApp links so treasurer can open it
+    if request.is_json or request.headers.get('Accept', '').startswith('application/json'):
+        resp = {'ok': True, 'message': 'Contribution validated'}
+        if whatsapp_links:
+            resp['whatsapp'] = whatsapp_links
+        return jsonify(resp)
+
+    # For form-based flow, redirect to wa.me (opens WhatsApp web or app)
+    if whatsapp_links:
+        return redirect(whatsapp_links['web'])
+
     return jsonify({'ok': True, 'message': 'Contribution validated'})
 
 
