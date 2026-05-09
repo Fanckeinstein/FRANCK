@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from extensions import db
 from models import User, Contribution, Loan, Transaction
 from datetime import datetime, timedelta
-from sqlalchemy import func
+from sqlalchemy import func, extract
 from verification.utils import send_email, send_whatsapp
 from werkzeug.utils import secure_filename
 import os
@@ -76,7 +76,7 @@ def dashboard():
     total_paid_year = db.session.query(func.sum(Contribution.amount)).filter(
         Contribution.user_id == current_user.id,
         Contribution.status == 'paid',
-        db.func.strftime('%Y', Contribution.paid_at) == str(year)
+        extract('year', Contribution.paid_at) == year
     ).scalar() or 0
     
     # Treasury balance
