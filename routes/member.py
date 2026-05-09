@@ -262,11 +262,23 @@ def request_contribution():
                     try:
                         img = Image.open(filepath)
                         text = pytesseract.image_to_string(img)
-                        # Look for patterns like MP260508.1340.3149810 or MP26050813403149810
-                        m = re.search(r"\b(MP[0-9\.]+)\b", text, re.IGNORECASE)
-                        if m:
-                            found = m.group(1).strip()
-                            contribution.payment_reference = found
+                        # Look for transaction ID patterns:
+                        # Orange Money: MP260508.1340.3149810 or MP26050813403149810
+                        # MTN: TX-prefix or TXID patterns
+                        # Generic: REF + numbers or ID + numbers
+                        patterns = [
+                            r"\b(MP[0-9\.]+([\s\.])?[0-9\.]+)\b",  # Orange Money
+                            r"\b(TX[0-9\.]+)\b",  # MTN/Generic TX
+                            r"\b(REF[:\s-]*[0-9\.]+)\b",  # REF: prefix
+                            r"\b(ID[:\s-]*[0-9]+)\b",  # ID: prefix
+                        ]
+                        for pattern in patterns:
+                            m = re.search(pattern, text, re.IGNORECASE)
+                            if m:
+                                found = m.group(1).strip().replace(' ', '')
+                                if len(found) > 5:  # Avoid noise; trans IDs are typically > 5 chars
+                                    contribution.payment_reference = found
+                                    break
                     except Exception:
                         pass
             if payment_reference:

@@ -46,29 +46,99 @@
                                         <i class="fas fa-check"></i> Valider
                                     </button>
                                     
-                                    <div class="modal fade" id="validateModal{{ loop.index }}">
-                                        <div class="modal-dialog">
+                                    <div class="modal fade" id="validateModal{{ loop.index }}" tabindex="-1">
+                                        <div class="modal-dialog modal-lg">
                                             <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Valider la cotisation</h5>
+                                                <div class="modal-header bg-light">
+                                                    <h5 class="modal-title"><i class="fas fa-check-circle"></i> Audit & Validation de cotisation</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                 </div>
                                                 <div class="modal-body">
-                                                    <p><strong>Membre:</strong> {{ contrib.user.full_name }}</p>
-                                                    <p><strong>Montant:</strong> {{ "%.0f"|format(contrib.amount) }} FCFA</p>
-                                                    <div class="mb-3">
+                                                    <div class="row mb-4">
+                                                        <div class="col-md-6">
+                                                            <div class="card bg-light">
+                                                                <div class="card-body">
+                                                                    <h6 class="card-title">Détails</h6>
+                                                                    <dl class="row mb-0">
+                                                                        <dt class="col-sm-6">Membre:</dt>
+                                                                        <dd class="col-sm-6"><strong>{{ contrib.user.full_name }}</strong></dd>
+                                                                        <dt class="col-sm-6">Montant:</dt>
+                                                                        <dd class="col-sm-6"><strong>{{ "%.0f"|format(contrib.amount) }} FCFA</strong></dd>
+                                                                        <dt class="col-sm-6">Mois:</dt>
+                                                                        <dd class="col-sm-6">{{ contrib.month }}</dd>
+                                                                        <dt class="col-sm-6">Référence:</dt>
+                                                                        <dd class="col-sm-6">
+                                                                            {% if contrib.payment_reference %}
+                                                                                <code>{{ contrib.payment_reference }}</code>
+                                                                            {% else %}
+                                                                                <span class="text-danger">⚠ Non trouvée</span>
+                                                                            {% endif %}
+                                                                        </dd>
+                                                                    </dl>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            {% if contrib.payment_proof %}
+                                                                <div class="card">
+                                                                    <div class="card-body p-2">
+                                                                        <h6 class="card-title">Preuve de paiement</h6>
+                                                                        <img src="/{{ contrib.payment_proof }}" alt="Preuve" class="img-fluid" style="max-height: 250px; object-fit: contain;">
+                                                                    </div>
+                                                                </div>
+                                                            {% else %}
+                                                                <div class="alert alert-danger">Aucune preuve téléchargée</div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+
+                                                    <hr>
+
+                                                    <div class="card border-warning">
+                                                        <div class="card-header bg-warning text-dark">
+                                                            <h6 class="mb-0"><i class="fas fa-tasks"></i> Checklist d'audit</h6>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="form-check mb-2">
+                                                                <input class="form-check-input audit-check" type="checkbox" id="check_amount{{ loop.index }}" data-index="{{ loop.index }}">
+                                                                <label class="form-check-label" for="check_amount{{ loop.index }}">
+                                                                    Montant correct: <code>{{ "%.0f"|format(contrib.amount) }} FCFA</code>
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-check mb-2">
+                                                                <input class="form-check-input audit-check" type="checkbox" id="check_receiver{{ loop.index }}" data-index="{{ loop.index }}">
+                                                                <label class="form-check-label" for="check_receiver{{ loop.index }}">
+                                                                    Destinataire correct: <strong>SOME Howpalmane Gaston</strong>
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-check mb-2">
+                                                                <input class="form-check-input audit-check" type="checkbox" id="check_reference{{ loop.index }}" data-index="{{ loop.index }}">
+                                                                <label class="form-check-label" for="check_reference{{ loop.index }}">
+                                                                    Référence de paiement présente {% if not contrib.payment_reference %}<span class="text-danger">(⚠ manquante)</span>{% endif %}
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-check mb-2">
+                                                                <input class="form-check-input audit-check" type="checkbox" id="check_proof{{ loop.index }}" data-index="{{ loop.index }}">
+                                                                <label class="form-check-label" for="check_proof{{ loop.index }}">
+                                                                    Preuve lisible et complète {% if not contrib.payment_proof %}<span class="text-danger">(⚠ manquante)</span>{% endif %}
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3 mt-3">
                                                         <label class="form-label">Moyen de paiement</label>
                                                         <select class="form-select" id="method{{ loop.index }}">
                                                             <option value="cash">Espèces</option>
-                                                            <option value="mobile_money">Mobile Money</option>
+                                                            <option value="mobile_money" selected>Mobile Money</option>
                                                             <option value="bank">Virement bancaire</option>
                                                         </select>
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                                    <button type="button" class="btn btn-success" onclick="validateContribution({{ contrib.id }}, {{ loop.index }})">
-                                                        <i class="fas fa-check"></i> Valider
+                                                    <button type="button" class="btn btn-success" id="validateBtn{{ loop.index }}" onclick="validateContribution({{ contrib.id }}, {{ loop.index }})" disabled>
+                                                        <i class="fas fa-check"></i> Valider (tous les points ✓)
                                                     </button>
                                                 </div>
                                             </div>
@@ -91,8 +161,30 @@
 </div>
 
 <script>
+// Enable/disable validate button based on audit checklist state
+document.querySelectorAll('.audit-check').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const index = this.dataset.index;
+        const allChecked = document.querySelectorAll(`#check_amount${index}, #check_receiver${index}, #check_reference${index}, #check_proof${index}`);
+        const allCheckedFlag = Array.from(allChecked).every(cb => cb.checked);
+        document.getElementById('validateBtn' + index).disabled = !allCheckedFlag;
+    });
+});
+
 function validateContribution(contribId, index) {
     const method = document.getElementById('method' + index).value;
+    const allChecks = [
+        document.getElementById('check_amount' + index),
+        document.getElementById('check_receiver' + index),
+        document.getElementById('check_reference' + index),
+        document.getElementById('check_proof' + index)
+    ];
+    
+    if (!allChecks.every(cb => cb.checked)) {
+        alert('⚠️ Veuillez cocher tous les points de la checklist d\'audit avant de valider.');
+        return;
+    }
+    
     fetch('/tresorier/api/contribution/validate', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
