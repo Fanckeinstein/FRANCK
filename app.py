@@ -1,4 +1,5 @@
 import os
+import tempfile
 from flask import Flask
 from extensions import db, login_manager
 from flask_migrate import Migrate
@@ -8,16 +9,9 @@ migrate = Migrate()
 
 
 def create_app():
-    app = Flask(__name__)
-    # Ensure instance path is writable in serverless environments (read-only filesystem otherwise)
-    import tempfile
-    instance_dir = os.getenv('INSTANCE_PATH', None) or os.path.join(tempfile.gettempdir(), 'unissons_instance')
-    try:
-        os.makedirs(instance_dir, exist_ok=True)
-        app.instance_path = instance_dir
-    except OSError:
-        # Fall back to default (may be read-only in some environments)
-        pass
+    instance_dir = os.getenv('INSTANCE_PATH') or os.path.join(tempfile.gettempdir(), 'unissons_instance')
+    app = Flask(__name__, instance_path=instance_dir)
+    os.makedirs(app.instance_path, exist_ok=True)
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-prod')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///unissons.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -71,13 +65,13 @@ def create_app():
     @app.cli.command()
     def seed_db():
         """Seed the database with test users (president, tresorier, secretaire, members)"""
-        from models import User
+        from models import User as UserModel
         
         # Create all tables first
         db.create_all()
         
         # Check if users already exist
-        existing_user = db.session.query(User).first()
+        existing_user = db.session.query(UserModel).first()
         if existing_user:
             print("✓ Database already has users, skipping seed")
             return
@@ -130,7 +124,7 @@ def create_app():
         
         users = []
         for user_data in users_data:
-            user = User(**user_data, is_active=True)
+            user = UserModel(**user_data, is_active=True)
             user.set_password('password123')
             users.append(user)
             db.session.add(user)
@@ -145,7 +139,7 @@ def create_app():
     @app.cli.command()
     def clear_data():
         """Clear all transactional data but keep audit logs and user accounts (admin only)"""
-        from models import AuditLog, User, Contribution, Loan, Transaction, MonthlySummary
+        from models import AuditLog, User as UserModel, Contribution, Loan, Transaction, MonthlySummary
         
         print("⚠️  Cette commande va vider les données transactionnelles (pas les utilisateurs ni l'audit log)")
         print("Les tables suivantes seront vidées:")
@@ -169,7 +163,7 @@ def create_app():
             total_records = contrib_count + loans_count + trans_count + summary_count
             
             # Get president user for audit log
-            president = db.session.query(User).filter_by(role='president').first()
+            president = db.session.query(UserModel).filter_by(role='president').first()
             
             # Delete all transactional data
             db.session.query(Contribution).delete()
@@ -190,7 +184,7 @@ def create_app():
             
             print(f"\n✓ Base de données nettoyée avec succès!")
             print(f"  - {total_records} enregistrements supprimés")
-            print(f"  - Utilisateurs: {db.session.query(User).count()} (inchangé)")
+            print(f"  - Utilisateurs: {db.session.query(UserModel).count()} (inchangé)")
             print(f"  - Audit logs: Mis à jour")
             print("\n✓ Vous pouvez maintenant commencer avec des données réelles")
             
