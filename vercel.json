@@ -1,5 +1,11 @@
 {
+  "version": 2,
   "rewrites": [
-    { "source": "/(.*)", "destination": "app.py" }
-  ]
+    { "source": "/(.*)", "destination": "/api/index.py" }
+  ],
+  "functions": {
+    "api/**/*.py": {
+      "excludeFiles": "{tests/**,__tests__/**,**/*.test.py,**/test_*.py,fixtures/**,__fixtures__/**,testdata/**,sample-data/**}"
+    }
+  }
 }
