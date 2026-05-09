@@ -1,5 +1,6 @@
 import os
 import tempfile
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 from flask import Flask
 from extensions import db, login_manager
 from flask_migrate import Migrate
@@ -13,7 +14,12 @@ def create_app():
     app = Flask(__name__, instance_path=instance_dir)
     os.makedirs(app.instance_path, exist_ok=True)
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-prod')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///unissons.db')
+    database_url = os.getenv('DATABASE_URL', 'sqlite:///unissons.db')
+    if database_url.startswith('postgres'):
+        parts = urlsplit(database_url)
+        filtered_query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True) if key != 'channel_binding']
+        database_url = urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(filtered_query), parts.fragment))
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
