@@ -5,6 +5,8 @@ from models import User, Contribution, Loan, Transaction
 from datetime import datetime, timedelta
 from sqlalchemy import func
 from verification.utils import send_email, send_whatsapp
+from werkzeug.utils import secure_filename
+import os
 
 
 def _send_contribution_confirmation(contribution):
@@ -233,6 +235,21 @@ def request_contribution():
             contribution.payment_proof = None
             contribution.paid_at = None
             contribution.validated_by = None
+
+        # Handle uploaded proof and payment reference if provided
+        if not request.is_json:
+            # payment_reference and file upload
+            payment_reference = request.form.get('payment_reference')
+            file = request.files.get('payment_proof')
+            if file:
+                uploads_dir = os.path.join(os.getcwd(), 'static', 'uploads', 'receipts')
+                os.makedirs(uploads_dir, exist_ok=True)
+                filename = secure_filename(f"{current_user.username}_{month}_{file.filename}")
+                filepath = os.path.join(uploads_dir, filename)
+                file.save(filepath)
+                contribution.payment_proof = os.path.relpath(filepath, os.getcwd()).replace('\\','/')
+            if payment_reference:
+                contribution.payment_reference = payment_reference
 
         db.session.commit()
 

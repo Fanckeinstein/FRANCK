@@ -110,6 +110,7 @@ def validate_contribution():
     contribution_id = data.get('contribution_id')
     payment_method = data.get('payment_method', 'cash')
     payment_proof = data.get('payment_proof')
+    payment_reference = data.get('payment_reference')
 
     if not contribution_id:
         return jsonify({'error': 'Contribution ID is required'}), 400
@@ -128,6 +129,8 @@ def validate_contribution():
     contribution.status = 'paid'
     contribution.payment_method = payment_method
     contribution.payment_proof = payment_proof
+    if payment_reference:
+        contribution.payment_reference = payment_reference
     contribution.paid_at = datetime.utcnow()
     contribution.validated_by = current_user.id
     

@@ -58,6 +58,7 @@ class Contribution(db.Model):
     status = db.Column(db.String(20), default='pending')  # 'pending', 'paid', 'overdue'
     payment_method = db.Column(db.String(50), nullable=True)  # 'mobile_money', 'cash', 'bank'
     payment_proof = db.Column(db.String(300), nullable=True)  # Path to screenshot/receipt
+    payment_reference = db.Column(db.String(200), nullable=True)
     paid_at = db.Column(db.DateTime, nullable=True)
     validated_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

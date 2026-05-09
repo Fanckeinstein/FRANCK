@@ -19,7 +19,7 @@
                     <div class="mt-2 text-danger fw-bold">Prenez soin de vérifier si le nom de réception est bien <span class="text-danger">SOME Howpalmane Gaston</span></div>
                 </div>
 
-                <form method="POST" action="/member/request-contribution">
+                <form method="POST" action="/member/request-contribution" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="month" class="form-label">Mois</label>
                         <input type="month" class="form-control form-control-lg" id="month" name="month" value="{{ current_month }}" required>
@@ -29,6 +29,18 @@
                         <label for="amount" class="form-label">Montant (FCFA)</label>
                         <input type="number" class="form-control form-control-lg" id="amount" name="amount" min="1000" step="100" value="1000" required>
                         <small class="text-muted">Montant recommandé et minimum: 1000 FCFA</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="payment_reference" class="form-label">Référence du paiement (Trans id)</label>
+                        <input type="text" class="form-control" id="payment_reference" name="payment_reference" placeholder="Ex: MP260508.1340.3149810" required>
+                        <small class="text-muted">Indiquez la référence fournie par l'opérateur (visible dans le reçu).</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="payment_proof" class="form-label">Preuve de paiement (capture d'écran)</label>
+                        <input type="file" class="form-control" id="payment_proof" name="payment_proof" accept="image/*" required>
+                        <small class="text-muted">Format accepté: PNG, JPG. Requis pour la validation manuelle.</small>
                     </div>
 
                     <div class="d-grid gap-2">
