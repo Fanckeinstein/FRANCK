@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 from sqlalchemy import func
 from verification.utils import send_email, send_whatsapp
 import io
+import os
+from twilio.rest import Client as TwilioClient
 
 tresorier_bp = Blueprint('tresorier', __name__, url_prefix='/tresorier', template_folder='../templates')
 
@@ -170,11 +172,34 @@ def validate_contribution():
             'mobile': f'whatsapp://send?phone={digits}&text={q}'
         }
 
+    # If Twilio credentials present, attempt server-side WhatsApp send (automatic)
+    twilio_result = None
+    tw_sid = os.environ.get('TWILIO_ACCOUNT_SID')
+    tw_token = os.environ.get('TWILIO_AUTH_TOKEN')
+    tw_from = os.environ.get('TWILIO_WHATSAPP_FROM')  # e.g. whatsapp:+1234567890
+    if member and member.phone and tw_sid and tw_token and tw_from:
+        try:
+            client = TwilioClient(tw_sid, tw_token)
+            to_number = digits
+            if not to_number.startswith('whatsapp:'):
+                to_number = f'whatsapp:{to_number}'
+            message = client.messages.create(
+                from_=tw_from,
+                to=to_number,
+                body=text
+            )
+            twilio_result = {'sid': getattr(message, 'sid', None), 'status': getattr(message, 'status', None)}
+        except Exception as exc:
+            # don't fail the flow if Twilio sending fails; include error in response
+            twilio_result = {'error': str(exc)}
+
     # If request came from JS/API return JSON including WhatsApp links so treasurer can open it
     if request.is_json or request.headers.get('Accept', '').startswith('application/json'):
         resp = {'ok': True, 'message': 'Contribution validated'}
         if whatsapp_links:
             resp['whatsapp'] = whatsapp_links
+        if twilio_result is not None:
+            resp['twilio'] = twilio_result
         return jsonify(resp)
 
     # For form-based flow, redirect to wa.me (opens WhatsApp web or app)
