@@ -7,6 +7,20 @@ from sqlalchemy import func
 import io
 import csv
 
+
+def _month_expr(col):
+    """Return a SQL expression that extracts YYYY-MM from a datetime column in a DB-agnostic way."""
+    try:
+        dialect_name = (db.engine.dialect.name or '').lower()
+    except Exception:
+        dialect_name = 'sqlite'
+
+    if 'sqlite' in dialect_name:
+        return func.strftime('%Y-%m', col)
+    if 'postgres' in dialect_name or 'postgresql' in dialect_name:
+        return func.to_char(col, 'YYYY-MM')
+    return func.to_char(col, 'YYYY-MM')
+
 secretaire_bp = Blueprint('secretaire', __name__, url_prefix='/secretaire', template_folder='../templates')
 
 
@@ -68,9 +82,8 @@ def dashboard():
 @secretaire_bp.route('/monthly-report')
 def monthly_report():
     """View monthly reports"""
-    reports = db.session.query(func.strftime('%Y-%m', Transaction.created_at)).group_by(
-        func.strftime('%Y-%m', Transaction.created_at)
-    ).all()
+    month_expr = _month_expr(Transaction.created_at)
+    reports = db.session.query(month_expr).group_by(month_expr).all()
     
     return render_template('secretaire/monthly_report.html', reports=[r[0] for r in reports])
 
@@ -150,8 +163,9 @@ def export_report(format):
         
         writer.writerow(['Transaction Type', 'User', 'Amount', 'Date', 'Description'])
         
+        month_expr = _month_expr(Transaction.created_at)
         transactions = Transaction.query.filter(
-            db.func.strftime('%Y-%m', Transaction.created_at) == month
+            month_expr == month
         ).all()
         
         for t in transactions:
