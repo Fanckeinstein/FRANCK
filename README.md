@@ -152,6 +152,28 @@ python app.py
 
 Le serveur démarre sur **http://127.0.0.1:5000**
 
+### Initialiser la base de données (contrôlé)
+
+Par défaut l'application ne recrée pas les tables automatiquement pour éviter d'écraser des données.
+
+Méthode 1 — Démarrage temporaire avec variable d'environnement (PowerShell):
+
+```powershell
+$env:INIT_DB='1'
+python app.py
+```
+
+Méthode 2 — Commande Flask (recommandée):
+
+Active ton environnement virtuel puis :
+
+```powershell
+$env:FLASK_APP='app.py'
+flask init-db
+```
+
+La commande `flask init-db` crée les tables sans lancer le serveur.
+
 ---
 
 ## 📖 API Documentation

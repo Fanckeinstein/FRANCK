@@ -1,6 +1,10 @@
 import os
 from flask import Flask
 from extensions import db, login_manager
+from flask_migrate import Migrate
+
+# Create migrate instance (initialized with app later)
+migrate = Migrate()
 
 
 def create_app():
@@ -11,10 +15,25 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+    migrate.init_app(app, db)
+    # Register a CLI command to initialize the database when desired.
+    # Use: `flask init-db` (with FLASK_APP=app.py and activated environment)
+    from flask.cli import with_appcontext
+    import click
+
+    @app.cli.command('init-db')
+    @with_appcontext
+    def init_db():
+        """Create database tables."""
+        db.create_all()
+        click.echo('Initialized the database.')
 
     with app.app_context():
         from models import User
-        db.create_all()
+        # Only create tables when explicitly requested via env var.
+        # Prevents accidental full DB initialization on every app start.
+        if os.getenv('INIT_DB', '0') == '1':
+            db.create_all()
 
         @login_manager.user_loader
         def load_user(user_id):
