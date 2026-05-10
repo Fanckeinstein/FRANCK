@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 import os
+from sqlalchemy import func
 
 bp = Blueprint('admin', __name__)
 
@@ -46,3 +47,41 @@ def seed():
 
     db.session.commit()
     return jsonify({'status': 'seeded', 'created': created, 'updated': updated}), 200
+
+
+@bp.route('/admin/users-count', methods=['GET'])
+def users_count():
+    """Count users by role (public endpoint for info)"""
+    from extensions import db
+    from models import User
+    
+    total = db.session.query(User).count()
+    by_role = db.session.query(
+        User.role,
+        func.count(User.id)
+    ).group_by(User.role).all()
+    
+    users_list = db.session.query(
+        User.username,
+        User.full_name,
+        User.role,
+        User.is_active,
+        User.email,
+        User.phone
+    ).order_by(User.role, User.username).all()
+    
+    return jsonify({
+        'total': total,
+        'by_role': {role: count for role, count in by_role},
+        'users': [
+            {
+                'username': u[0],
+                'full_name': u[1],
+                'role': u[2],
+                'active': u[3],
+                'email': u[4],
+                'phone': u[5]
+            }
+            for u in users_list
+        ]
+    }), 200
